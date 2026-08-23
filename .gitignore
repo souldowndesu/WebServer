@@ -1,0 +1,16 @@
+# Local AI/tool state
+.env
+.env.*
+!.env.example
+.codex/
+.claude/
+.idea/
+.vscode/
+
+# Common generated files
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+*.log
