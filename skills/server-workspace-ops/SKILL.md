@@ -23,6 +23,7 @@ Before acting, read the nearest `AGENTS.md`, then read `STATUS.md`, `TASKS.md`, 
 - Observe and save snapshot: `./server.ps1 status`
 - Refresh and show canonical progress: `./server.ps1 progress`
 - Inspect Git: `./server.ps1 git`
+- Push through the local network: `./server.ps1 push`
 - List open PRs: `./server.ps1 prs`
 - Download locally: `./server.ps1 download <https-url> [name]`
 - Upload staged artifact: `./server.ps1 upload <downloads-file> [remote-relative-path]`
@@ -34,6 +35,7 @@ Treat `STATUS.md` and `TASKS.md` on the server as canonical; local copies are mi
 - Keep ordinary source, task files, temporary data, and uploaded artifacts inside `agent-1`; use `.cache/uploads` for remote staging.
 - Download external artifacts to local `downloads/` first, record their source/version, verify SHA-256, upload, and verify SHA-256 again.
 - Do not reveal or copy SSH keys or GitHub tokens. Use `/root/.local/bin/agent-gh` for GitHub CLI operations.
+- When server-to-GitHub push is unreliable, use local `./server.ps1 push`; its restricted SSH credential relay must not be replaced with a token file or printed credential command.
 - Fetch and rebase on `origin/main` before work. Push each meaningful iteration to `origin/agent-1`. Open a PR for each coherent completed unit and merge only after diff, validation, and coordination checks.
 - Before changing packages, services, global tools, profiles, credential wiring, or anything outside `agent-1`, add a complete entry to `ENVIRONMENT_CHANGES.md` and use a dedicated documentation-only PR. Do not mix that PR with ordinary work.
 - If the worktree contains unrecognized changes, stop and inspect. Never overwrite, reset, or delete them.

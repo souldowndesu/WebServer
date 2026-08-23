@@ -23,6 +23,7 @@ Prefer the local wrapper:
 .\server.ps1 status
 .\server.ps1 progress
 .\server.ps1 git
+.\server.ps1 push
 .\server.ps1 prs
 ```
 
@@ -69,6 +70,14 @@ git -C /root/ai-workspaces/agent-1 add -- <explicit-paths>
 git -C /root/ai-workspaces/agent-1 commit -m "Describe the coherent change"
 git -C /root/ai-workspaces/agent-1 push origin agent-1
 ```
+
+If the server-to-GitHub connection times out or terminates TLS, use the local relay instead of repeatedly retrying or copying credentials:
+
+```powershell
+.\server.ps1 push
+```
+
+The relay keeps a temporary nested checkout in local `state/git-relay`, fetches the committed `agent-1` state over SSH, and pushes through the local network. Its Git credential helper calls the server's repository-restricted helper over SSH; the token is not stored locally or printed. The action refuses a dirty relay, an unexpected branch/remote, or a non-fast-forward update.
 
 Open and merge a completed unit:
 

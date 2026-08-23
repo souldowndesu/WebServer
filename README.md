@@ -10,6 +10,7 @@
 .\server.ps1 status
 .\server.ps1 progress
 .\server.ps1 git
+.\server.ps1 push
 .\server.ps1 prs
 .\server.ps1 connect
 ```
@@ -17,6 +18,7 @@
 - `status`：观察服务器并把快照保存到 `state/SERVER_STATUS.md`。
 - `progress`：先从服务器同步文档，再显示 `STATUS.md` 和 `TASKS.md`。
 - `git`：查看服务器端 `agent-1` 分支、工作树和最近提交。
+- `push`：服务器到 GitHub 不稳定时，通过本机网络安全推送 `agent-1`；token 不保存到本机。
 - `prs`：查看该仓库的开放 PR。
 - `connect`：进入服务器交互终端。
 
@@ -38,6 +40,7 @@
 - “看/同步工作进度”
 - “把这个地址下载到本机再上传”
 - “检查 Git 和 PR”
+- “通过本机推送这一轮”
 - “提交这一轮并提 PR”
 
 agent 应加载 `skills/server-workspace-ops/SKILL.md` 并遵守 `AGENTS.md`，不再重新摸索路径、凭据入口和协作边界。

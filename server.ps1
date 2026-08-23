@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('help', 'connect', 'status', 'progress', 'sync', 'git', 'prs', 'download', 'upload')]
+    [ValidateSet('help', 'connect', 'status', 'progress', 'sync', 'git', 'push', 'prs', 'download', 'upload')]
     [string]$Action = 'help',
 
     [Parameter(Position = 1)]
@@ -94,6 +94,70 @@ function Get-DownloadsPath {
     return $resolved
 }
 
+function Push-AgentBranchViaLocalRelay {
+    $relayPath = Join-Path $script:StateRoot 'git-relay'
+    New-Item -ItemType Directory -Path $script:StateRoot -Force | Out-Null
+
+    if (-not (Test-Path -LiteralPath $relayPath)) {
+        Invoke-CheckedNative -Command 'git' -Arguments @(
+            'clone',
+            '--no-hardlinks',
+            "${script:SshHost}:$script:RemoteRoot",
+            $relayPath
+        )
+    } elseif (-not (Test-Path -LiteralPath (Join-Path $relayPath '.git'))) {
+        throw "$relayPath exists but is not the expected Git relay repository."
+    }
+
+    $pending = & git '-C' $relayPath 'status' '--porcelain'
+    if ($LASTEXITCODE -ne 0) { throw 'Unable to inspect the local Git relay.' }
+    if ($pending) { throw 'The local Git relay has uncommitted changes; inspect it before pushing.' }
+
+    $branch = (& git '-C' $relayPath 'branch' '--show-current').Trim()
+    if ($LASTEXITCODE -ne 0 -or $branch -ne 'agent-1') {
+        throw "The local Git relay must be on branch agent-1, not '$branch'."
+    }
+
+    $githubUrl = 'https://github.com/souldowndesu/agent.git'
+    $remotes = @(& git '-C' $relayPath 'remote')
+    if ($remotes -notcontains 'github') {
+        Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'remote', 'add', 'github', $githubUrl)
+    } else {
+        $actualUrl = (& git '-C' $relayPath 'remote' 'get-url' 'github').Trim()
+        if ($actualUrl -ne $githubUrl) { throw "Unexpected github remote URL: $actualUrl" }
+    }
+
+    Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'config', '--local', 'credential.useHttpPath', 'true')
+    & git '-C' $relayPath 'config' '--local' '--unset-all' 'credential.helper'
+    if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 5) {
+        throw 'Unable to reset the local relay credential helpers.'
+    }
+    Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'config', '--local', '--add', 'credential.helper', '')
+    Invoke-CheckedNative -Command 'git' -Arguments @(
+        '-C', $relayPath, 'config', '--local', '--add', 'credential.helper',
+        '!f() { ssh aliyun-server /root/.local/bin/agent-git-credential "$@"; }; f'
+    )
+
+    Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'fetch', 'origin', 'agent-1')
+    Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'merge', '--ff-only', 'origin/agent-1')
+
+    $commit = (& git '-C' $relayPath 'rev-parse' 'agent-1').Trim()
+    if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-f]{40}$') {
+        throw 'Unable to resolve the agent-1 commit for relay push.'
+    }
+
+    $previousPromptSetting = $env:GIT_TERMINAL_PROMPT
+    try {
+        $env:GIT_TERMINAL_PROMPT = '0'
+        Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'push', 'github', 'agent-1:agent-1')
+    } finally {
+        $env:GIT_TERMINAL_PROMPT = $previousPromptSetting
+    }
+
+    Invoke-ServerCommand -RemoteCommand "git -C $script:RemoteRoot update-ref refs/remotes/origin/agent-1 '$commit'"
+    Write-Host "GitHub agent-1 updated through the local relay at commit $commit."
+}
+
 switch ($Action) {
     'help' {
         @'
@@ -101,6 +165,7 @@ Usage:
   .\server.ps1 status
   .\server.ps1 progress
   .\server.ps1 git
+  .\server.ps1 push
   .\server.ps1 prs
   .\server.ps1 connect
   .\server.ps1 download <https-url> [local-name]
@@ -147,6 +212,10 @@ Usage:
 
     'git' {
         Invoke-ServerCommand -RemoteCommand 'git -C /root/ai-workspaces/agent-1 status --short --branch; git -C /root/ai-workspaces/agent-1 log -5 --oneline --decorate'
+    }
+
+    'push' {
+        Push-AgentBranchViaLocalRelay
     }
 
     'prs' {
