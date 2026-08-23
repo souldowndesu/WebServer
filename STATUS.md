@@ -4,13 +4,13 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 
 ## Agent 1
 
-- State: waiting for repository owner
-- Current task: create replacement main ruleset, then merge PR #2 and PR #3
+- State: ready
+- Current task: none
 - Branch: `agent-1`
-- Last verification: old ruleset deletion confirmed; replacement payload approved; GitHub ruleset creation returned HTTP 403 because the server token lacks Administration write permission
-- Pull requests: #2 — auditable server operations workflow; #3 — replacement ruleset change record
-- Blocker: `main` currently has no ruleset; do not merge until the replacement is created
-- Next action: repository owner creates the documented ruleset in GitHub settings or updates the protected server token with Administration read/write permission
+- Last verification: replacement ruleset `21255128` is active and matches the approved JSON; PR-only integration, deletion/force-push protection, discussion resolution, zero approvals, and no bypass actors verified
+- Pull requests: #2 — auditable server operations workflow; #3 — replacement ruleset change record; both ready to merge
+- Last handoff: server workflow and compatible main protection are complete
+- Next action: use `server.ps1 progress` at the start and end of future work
 
 ## Agent 2
 
@@ -20,4 +20,4 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 
 ## Decisions pending
 
-- Ruleset creation method: GitHub UI by repository owner, or retry after protected token permission update.
+- None.

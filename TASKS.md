@@ -11,7 +11,6 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
-| Replace incompatible main ruleset | Agent 1 + repository owner | `agent-1-ruleset-policy` | Active default-branch ruleset requires PR, blocks deletion/force-push, resolves discussions, and permits single-account merge | Blocked: token lacks Administration write; PR #3 records exact settings |
 
 ## Completed
 
@@ -19,3 +18,4 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 | --- | --- | --- | --- | --- |
 | Initialize shared two-agent repository | Shared | #1 | Branches and coordination files present | Complete |
 | Establish server operations and governance | Agent 1 | #2 | SSH/status/Git/PR helpers; PowerShell parse; hash-matched upload; root rules and skill reviewed | Complete |
+| Replace incompatible main ruleset | Agent 1 + repository owner | #3 | Ruleset `21255128` API verified: active, PR-only, deletion/force-push protected, discussions resolved, zero approvals, no bypass | Complete |
