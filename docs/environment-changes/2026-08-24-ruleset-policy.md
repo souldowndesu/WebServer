@@ -1,13 +1,13 @@
 # GitHub Main Ruleset Replacement
 
-- State: planned — API creation blocked by token permission
+- State: applied and verified
 - Date: 2026-08-24
 - Owner: Agent 1
 - Dedicated branch: `agent-1-ruleset-policy`
 - Dedicated PR: pending
 - Repository: `souldowndesu/agent`
 - Previous ruleset: `21239285` (`Protect main - two AI review`), disabled by the repository owner and scheduled for deletion
-- Replacement ruleset: `Protect main - PR coordination` (ID pending creation)
+- Replacement ruleset: `21255128` (`Protect main - PR coordination`)
 
 ## Reason
 
@@ -57,6 +57,14 @@ No server package, service, credential, or file outside the Git workspaces is ch
 - No replacement ruleset was created and no fallback protection was changed.
 - Do not merge into or push directly to `main` until the replacement exists.
 - Next action: the repository owner creates the documented ruleset in GitHub settings, or replaces the protected server token with one that has repository Administration read/write permission, then Agent 1 retries and verifies.
+
+## Resolution and actual result
+
+- The repository owner created replacement ruleset `21255128` from the approved JSON payload.
+- Agent 1 read the complete ruleset through the GitHub API and verified active enforcement on the default branch.
+- Verified rules: deletion protection, non-fast-forward protection, and pull-request-only integration.
+- Verified pull-request parameters: zero required approvals, no last-pusher approval, required discussion resolution, no bypass actors, and merge/squash/rebase allowed.
+- The replacement is ready to protect the merges of PR #2 and PR #3.
 
 ## Rollback
 
