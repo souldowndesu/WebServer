@@ -132,7 +132,8 @@ function Push-AgentBranchViaLocalRelay {
     if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 5) {
         throw 'Unable to reset the local relay credential helpers.'
     }
-    Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'config', '--local', '--add', 'credential.helper', '')
+    & git '-C' $relayPath 'config' '--local' '--add' 'credential.helper' ''
+    if ($LASTEXITCODE -ne 0) { throw 'Unable to add the local credential-helper reset entry.' }
     Invoke-CheckedNative -Command 'git' -Arguments @(
         '-C', $relayPath, 'config', '--local', '--add', 'credential.helper',
         '!f() { ssh aliyun-server /root/.local/bin/agent-git-credential "$@"; }; f'
