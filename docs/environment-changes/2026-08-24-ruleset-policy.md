@@ -1,6 +1,6 @@
 # GitHub Main Ruleset Replacement
 
-- State: planned
+- State: planned — API creation blocked by token permission
 - Date: 2026-08-24
 - Owner: Agent 1
 - Dedicated branch: `agent-1-ruleset-policy`
@@ -47,6 +47,16 @@ No server package, service, credential, or file outside the Git workspaces is ch
 - It must report `required_approving_review_count: 0` and `require_last_push_approval: false`.
 - PR #2 must become mergeable without a second account.
 - The ruleset must still report active enforcement, deletion protection, non-fast-forward protection, a pull-request rule, and required review-thread resolution.
+
+## Attempt on 2026-08-24
+
+- The previous ruleset was confirmed deleted; the repository ruleset list was empty.
+- Agent 1 attempted to create the approved replacement through the repository rulesets API.
+- GitHub returned HTTP 403: `Resource not accessible by personal access token`.
+- The installed repository token can push code and manage pull requests but cannot create rulesets because it lacks repository Administration write permission.
+- No replacement ruleset was created and no fallback protection was changed.
+- Do not merge into or push directly to `main` until the replacement exists.
+- Next action: the repository owner creates the documented ruleset in GitHub settings, or replaces the protected server token with one that has repository Administration read/write permission, then Agent 1 retries and verifies.
 
 ## Rollback
 
