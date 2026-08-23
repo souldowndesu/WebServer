@@ -7,6 +7,12 @@
 .idea/
 .vscode/
 
+# Workspace-local staging and generated files
+.cache/
+downloads/
+state/
+mirror/
+
 # Common generated files
 node_modules/
 dist/
