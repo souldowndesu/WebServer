@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| Replace incompatible main ruleset | Agent 1 + repository owner | `agent-1-ruleset-policy` | Active default-branch ruleset requires PR, blocks deletion/force-push, resolves discussions, and permits single-account merge | Blocked: token lacks Administration write; PR #3 records exact settings |
 
 ## Completed
 
