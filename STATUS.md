@@ -4,13 +4,13 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 
 ## Agent 1
 
-- State: in progress
-- Current task: build and deploy a loopback-only Mihomo proxy control page accessed through an SSH tunnel
+- State: ready
+- Current task: none
 - Branch: `agent-1`
-- Last verification: all 13 automated tests pass; the proxy control page loaded 40 live nodes through the Mihomo Unix socket; real rule/direct and AUTO/manual switching restored defaults; 1440×900, 820×900, and 390×844 browser checks have zero console/network errors and no horizontal overflow
-- Pull requests: #5 — clock/chat/API; #6 and #7 — public chat service plan/application; #8 — local-only Mihomo GitHub proxy; all merged; #10 — loopback-only proxy control page (open)
-- Last handoff: product merged at `8653e1c`; public chat environment record merged at `ccd0674`; proxy environment record merged at `1b9e610`
-- Next action: review and merge the proxy control page product PR, then document and deploy its loopback-only systemd service
+- Last verification: 13 automated tests pass; proxy-control.service is enabled/active as a low-privilege user on 127.0.0.1:8790; allowlisted API returned 40 nodes in `rule + AUTO`; invalid Host/cross-origin changes were rejected; public TCP 8790 was unreachable; desktop/tablet/mobile SSH-tunnel browser checks had zero errors, failed requests, or horizontal overflow; Mihomo, chat, and GitHub proxy checks remained healthy
+- Pull requests: #5 — clock/chat/API; #6 and #7 — public chat service; #8 — local-only Mihomo GitHub proxy; #10 — proxy control page; #11 — loopback-only control service; all merged
+- Last handoff: proxy control product merged at `a790710`; loopback-only service record merged at `26408ed`; current control state restored to `rule + AUTO`
+- Next action: establish an SSH tunnel with `ssh -N -L 8790:127.0.0.1:8790 aliyun-server`, then browse to `http://127.0.0.1:8790`
 
 ## Agent 2
 
