@@ -86,7 +86,7 @@ No server environment changes were made during the workflow-document initializat
 
 - State: applied
 - Owner: Agent 1
-- Dedicated PR: #15 (plan); applied-verification PR pending
+- Dedicated PR: #15 (plan); #16 (applied verification)
 - Reason: the repository was renamed to `souldowndesu/WebServer`; the existing least-privilege credential helper still authorizes only the old redirected `souldowndesu/agent` path, causing direct pushes to the canonical URL to fail. The operator explicitly authorized the new Git path to simplify pushes.
 - Scope (exact paths/packages/services/settings): replace only the repository path allowlist in `/root/.local/bin/agent-git-credential` from `souldowndesu/agent` and `souldowndesu/agent.git` to `souldowndesu/WebServer` and `souldowndesu/WebServer.git`; preserve root:root mode 0755, HTTPS-only protocol, github.com-only host, get-only operation, token-file location/content/permissions, output format, and all other logic. Change only agent-1's repository-local `origin` URL to `https://github.com/souldowndesu/WebServer.git`. No token rotation/readout, global Git config, package, service, firewall, profile, proxy, GitHub permission, agent-2 checkout, or product-file change.
 - Source URL/version/SHA-256, if applicable: no external artifact. Existing `/root/.local/bin/agent-git-credential` SHA-256 is `b125f86291815aba32c4559eac77132c3ea03352598ce8bd91167df6fd70b1b0`, size 586 bytes, root:root mode 0755. The planned replacement is derived from that exact file with only the two repository path strings changed.
