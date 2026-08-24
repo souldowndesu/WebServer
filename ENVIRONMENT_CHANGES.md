@@ -61,6 +61,27 @@ No server environment changes were made during the workflow-document initializat
 - Rollback: unset only the agent-1 http.https://github.com.proxy key; disable and stop mihomo.service; remove only /etc/systemd/system/mihomo.service and /usr/local/bin/mihomo; daemon-reload; confirm /etc/mihomo, /var/lib/mihomo, and /run/mihomo resolve to those exact paths before removing their contents/directories; remove the mihomo system account/group; verify no 7890 listener, control socket, or secret staging files remain.
 - Coordination impact: agent-2 and global network behavior remain unchanged. The subscription and generated proxy credentials are confidential, root/mihomo readable only, and excluded from Git, PRs, logs, status mirrors, and chat output.
 
+### 2026-08-24 — Loopback-only Mihomo proxy control web service
+
+- State: planned
+- Owner: Agent 1
+- Dedicated PR: pending
+- Reason: run the merged proxy control dashboard as a restartable, low-privilege service that the operator can reach through an authenticated SSH tunnel without exposing control access to the public network.
+- Scope (exact paths/packages/services/settings): create system user/group proxy-control and add that user to the existing mihomo supplementary group; create /opt/proxy-control containing the merged `proxy_control` package; create /etc/systemd/system/proxy-control.service; enable and start proxy-control.service on 127.0.0.1:8790. No package installation, UFW rule, cloud firewall change, public listener, Mihomo TCP controller, credential, profile, agent-2, or global proxy setting change.
+- Source URL/version/SHA-256, if applicable: no external artifact; application source is repository main merge commit a7907104e0990a8b03abd4d0f551ced1d1bd0fc4.
+- Planned actions:
+  1. Stage the systemd unit only under /root/ai-workspaces/agent-1/.cache/uploads/proxy-control.service and validate it with systemd-analyze verify.
+  2. Confirm TCP 8790, the proxy-control account, /opt/proxy-control, and proxy-control.service are absent before creating them.
+  3. Create the non-login proxy-control system account/group, add only that account to the existing mihomo group, and verify no other group membership changes.
+  4. Install the merged proxy_control package root-owned and read-only under /opt/proxy-control; do not copy repository metadata, tests, private subscription data, or credentials.
+  5. Install the validated unit, reload systemd, and enable/start proxy-control.service.
+  6. Verify enabled/active state, the exact 127.0.0.1:8790 listener, successful access to /run/mihomo/controller.sock through the supplementary group, allowlisted status output, same-origin mutation protection, absence of a public/UFW change, and a real browser session through an SSH local port forward.
+- Planned service: runs `/usr/bin/python3 -m proxy_control.server --host 127.0.0.1 --port 8790 --socket /run/mihomo/controller.sock` as the non-login proxy-control user with the existing mihomo group supplementary access; reads only /opt/proxy-control and the Mihomo Unix socket; writes nowhere; uses NoNewPrivileges, private devices/tmp, strict filesystem/home/kernel protection, loopback-only IP allow rules, restricted AF_INET/AF_UNIX families, a 96 MiB memory ceiling, and a 64-task ceiling.
+- Actual actions: pending.
+- Verification and result: pending. Planned checks are staged/installed unit hash, systemd-analyze exit 0, account/group scope, installed source hashes, enabled/active/ExecMainStatus 0, MemoryMax/TasksMax, exact listener, API status with no secret fields, rejected non-loopback Host and cross-origin POST, SSH-tunnel browser access, current `rule + AUTO` state, no UFW 8790 rule, and no disruption to the public chat or Mihomo services.
+- Rollback: disable and stop only proxy-control.service; remove only /etc/systemd/system/proxy-control.service; daemon-reload; confirm /opt/proxy-control resolves to that exact path before removing it; remove only the proxy-control system account/group and its mihomo supplementary membership; verify no 8790 listener remains. No Mihomo configuration, subscription, Git proxy, UFW, chat service, or agent-2 rollback is required.
+- Coordination impact: the service reads a deployed copy of the main-merged product and does not read either Git workspace at runtime. Agent-2 and public network behavior remain unchanged. Operators access the page with `ssh -N -L 8790:127.0.0.1:8790 aliyun-server` and browse to `http://127.0.0.1:8790`.
+
 ## Entry template
 
 ### YYYY-MM-DD — short title
