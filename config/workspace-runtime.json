@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "shared_ports": {
+    "mihomo-proxy": {
+      "bind": "127.0.0.1",
+      "owner": "server-environment",
+      "port": 7890
+    },
+    "connectivity-chat": {
+      "bind": "0.0.0.0",
+      "owner": "main-deployment",
+      "port": 8765
+    },
+    "proxy-control": {
+      "bind": "127.0.0.1",
+      "owner": "main-deployment",
+      "port": 8790
+    }
+  },
+  "workspaces": {
+    "agent-1": {
+      "bind": "127.0.0.1",
+      "branch": "agent-1",
+      "compose_project": "agent1",
+      "port_range": [
+        18761,
+        18799
+      ],
+      "ports": {
+        "chat": 18761,
+        "proxy-control": 18762
+      },
+      "runtime_dir": ".runtime"
+    },
+    "agent-2": {
+      "bind": "127.0.0.1",
+      "branch": "agent-2",
+      "compose_project": "agent2",
+      "port_range": [
+        18861,
+        18899
+      ],
+      "ports": {
+        "chat": 18861,
+        "proxy-control": 18862
+      },
+      "runtime_dir": ".runtime"
+    }
+  }
+}
