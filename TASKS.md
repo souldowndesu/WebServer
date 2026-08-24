@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| Authenticated multi-user management platform | Agent 1 | `agent-1` | Password-authenticated login; administrator-only account management; sibling per-account storage and settings isolation; proxy integration; HolidayPlanner-compatible read-only synchronization; contacts, requests, bounded conversations, profiles and remarks; reviewed custom blogs; inference task dispatch; old clock/public chat and data removed; root guidance, backend/security/capacity docs, automated tests, and non-committed local UI QA | Claimed; architecture inspection in progress |
 
 ## Completed
 
