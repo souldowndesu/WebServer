@@ -4,13 +4,13 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 
 ## Agent 1
 
-- State: ready
-- Current task: none
+- State: in progress
+- Current task: build and deploy a loopback-only Mihomo proxy control page accessed through an SSH tunnel
 - Branch: `agent-1`
-- Last verification: public clock/chat health returned ok; the local PowerShell input tool sent and read back message #6; Mihomo is enabled/active on 127.0.0.1:7890 with rule mode, AUTO selection, 40 usable nodes, no public proxy/control port, proxied GitHub HTTP 200, and normal repository fetch completed without stderr
-- Pull requests: #5 — clock/chat/API; #6 and #7 — public chat service plan/application; #8 — local-only Mihomo GitHub proxy; all merged
+- Last verification: all 13 automated tests pass; the proxy control page loaded 40 live nodes through the Mihomo Unix socket; real rule/direct and AUTO/manual switching restored defaults; 1440×900, 820×900, and 390×844 browser checks have zero console/network errors and no horizontal overflow
+- Pull requests: #5 — clock/chat/API; #6 and #7 — public chat service plan/application; #8 — local-only Mihomo GitHub proxy; all merged; #10 — loopback-only proxy control page (open)
 - Last handoff: product merged at `8653e1c`; public chat environment record merged at `ccd0674`; proxy environment record merged at `1b9e610`
-- Next action: use `server.ps1 progress` at the start and end of future work; add TLS/authentication before using the public chat for anything sensitive
+- Next action: review and merge the proxy control page product PR, then document and deploy its loopback-only systemd service
 
 ## Agent 2
 
