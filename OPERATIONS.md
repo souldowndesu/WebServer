@@ -10,6 +10,7 @@
 | Assigned branch | `agent-1` |
 | Integration branch | `main` |
 | GitHub repository | `souldowndesu/WebServer` |
+| Restricted Git push URL | `https://github.com/souldowndesu/agent.git` (GitHub compatibility redirect) |
 | Agent 1 development ports | `127.0.0.1:18761-18799` |
 | Agent 2 development ports | `127.0.0.1:18861-18899` |
 | Safe remote upload staging | `/root/ai-workspaces/agent-1/.cache/uploads` |
@@ -102,6 +103,8 @@ Tests use ephemeral port `0`. Workspace state belongs under ignored `.runtime/`.
 ## Git and GitHub
 
 Run Git inside `/root/ai-workspaces/agent-1`. The repository already has a restricted credential helper. GitHub CLI operations must use `/root/.local/bin/agent-gh`; plain `gh` does not inherit the protected repository token.
+
+GitHub renamed the repository to `souldowndesu/WebServer`, which is the canonical name for API and PR commands. The least-privilege credential helper remains path-restricted to the old `souldowndesu/agent.git` URL; GitHub redirects that URL to the canonical repository. Keep `origin` and the local relay push remote on the old compatibility URL unless the credential wiring is deliberately migrated through a dedicated environment-change PR.
 
 Start an iteration:
 
