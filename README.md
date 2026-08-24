@@ -47,6 +47,27 @@ curl -X POST http://SERVER_ADDRESS:8765/api/messages -H 'Content-Type: applicati
 
 成功时返回 HTTP 201 和创建后的消息。输入为空、类型错误或超过昵称 40 字/消息 500 字时返回 HTTP 400。
 
+## Mihomo 代理控制页
+
+`proxy_control` 提供只依赖 Python 标准库的本机控制页，可查看运行状态、切换 `rule`/`global`/`direct` 模式、选择 AUTO 或具体节点、搜索节点和刷新订阅。页面只返回节点名称、协议、状态与延迟，不返回订阅或节点凭据。
+
+开发运行：
+
+~~~sh
+cd /root/ai-workspaces/agent-1
+python3 -m proxy_control.server --host 127.0.0.1 --port 8790 --socket /run/mihomo/controller.sock
+~~~
+
+从操作者本机建立 SSH 隧道：
+
+~~~powershell
+ssh -N -L 8790:127.0.0.1:8790 aliyun-server
+~~~
+
+保持该窗口运行，然后在浏览器访问 `http://127.0.0.1:8790`。控制页不应绑定公网地址，也不需要新增 UFW 规则。
+
+控制 API 只接受 loopback Host、同源 Origin 和 JSON 请求。状态接口会对 Mihomo 返回进行字段白名单处理，隐藏原始配置、订阅地址、节点服务器和密码。
+
 ## 最简单的指令
 
 在本目录打开 PowerShell：

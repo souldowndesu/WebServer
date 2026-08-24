@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>代理控制台</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7.5h16M7 12h10M9.5 16.5h5"/></svg>
+        </span>
+        <div>
+          <p class="brand-kicker">SERVER NETWORK</p>
+          <h1>代理控制台</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="local-badge" title="控制页面不向公网开放">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V8a4 4 0 0 1 8 0v3M6.5 11h11v9h-11z"/></svg>
+          仅本机
+        </span>
+        <button class="icon-button" id="refresh-page" type="button" aria-label="刷新页面数据" title="刷新页面数据">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7v5h-5M5 17v-5h5M18.2 12a6.5 6.5 0 0 0-11-3.7L5 10M6 12a6.5 6.5 0 0 0 11 3.7l2-1.7"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="overview" aria-labelledby="overview-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">OVERVIEW</p>
+            <h2 id="overview-title">运行概览</h2>
+          </div>
+          <div class="service-state" id="service-state" data-state="loading" role="status">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="service-state-text">正在连接</span>
+          </div>
+        </div>
+
+        <div class="metrics" aria-live="polite">
+          <article class="metric">
+            <span class="metric-label">当前模式</span>
+            <strong class="metric-value" id="metric-mode">—</strong>
+            <span class="metric-detail">GitHub 专用规则</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">已选线路</span>
+            <strong class="metric-value truncate" id="metric-selection">—</strong>
+            <span class="metric-detail truncate" id="metric-auto">等待节点数据</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">可用节点</span>
+            <strong class="metric-value tabular" id="metric-nodes">—</strong>
+            <span class="metric-detail" id="metric-latency">尚未测速</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="control-grid" aria-label="代理设置">
+        <article class="control-section mode-section">
+          <div class="control-heading">
+            <div>
+              <p class="eyebrow">ROUTING</p>
+              <h2>代理模式</h2>
+            </div>
+            <span class="saved-state" id="mode-saved" aria-live="polite"></span>
+          </div>
+          <div class="mode-options" role="radiogroup" aria-label="代理模式">
+            <button class="mode-option" type="button" data-mode="rule" role="radio" aria-checked="false">
+              <span class="mode-name">规则</span>
+              <span class="mode-copy">GitHub 走代理，其余直连</span>
+            </button>
+            <button class="mode-option" type="button" data-mode="global" role="radio" aria-checked="false">
+              <span class="mode-name">全局</span>
+              <span class="mode-copy">使用端口的流量全部代理</span>
+            </button>
+            <button class="mode-option" type="button" data-mode="direct" role="radio" aria-checked="false">
+              <span class="mode-name">直连</span>
+              <span class="mode-copy">临时绕过全部代理规则</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="control-section subscription-section">
+          <div class="control-heading">
+            <div>
+              <p class="eyebrow">SUBSCRIPTION</p>
+              <h2>订阅状态</h2>
+            </div>
+            <span class="subscription-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h8"/></svg>
+            </span>
+          </div>
+          <dl class="subscription-meta">
+            <div><dt>最近更新</dt><dd id="provider-updated">—</dd></div>
+            <div><dt>自动更新</dt><dd>每 60 分钟</dd></div>
+            <div><dt>健康检查</dt><dd>每 5 分钟</dd></div>
+          </dl>
+          <button class="secondary-button" id="refresh-provider" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7v5h-5M5 17v-5h5M18.2 12a6.5 6.5 0 0 0-11-3.7L5 10M6 12a6.5 6.5 0 0 0 11 3.7l2-1.7"/></svg>
+            立即更新订阅
+          </button>
+        </article>
+      </section>
+
+      <section class="nodes-section" aria-labelledby="nodes-title">
+        <div class="nodes-toolbar">
+          <div>
+            <p class="eyebrow">NODES</p>
+            <h2 id="nodes-title">线路选择</h2>
+          </div>
+          <label class="search-box" for="node-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg>
+            <span class="sr-only">搜索节点</span>
+            <input id="node-search" type="search" placeholder="搜索节点名称或类型" autocomplete="off">
+          </label>
+        </div>
+
+        <div class="auto-row" id="auto-row" data-selected="false">
+          <div class="auto-symbol" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 16.5 9 12l3 3 7-8M15 7h4v4"/></svg>
+          </div>
+          <div class="auto-copy">
+            <div class="node-title-line">
+              <strong>AUTO 自动选择</strong>
+              <span class="tag">推荐</span>
+            </div>
+            <span id="auto-description">根据延迟自动选择当前线路</span>
+          </div>
+          <button class="select-button" id="select-auto" type="button" aria-pressed="false">选择</button>
+        </div>
+
+        <div class="table-frame" id="table-frame" aria-busy="true">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">节点</th>
+                <th scope="col">协议</th>
+                <th scope="col">状态</th>
+                <th scope="col">延迟</th>
+                <th scope="col"><span class="sr-only">操作</span></th>
+              </tr>
+            </thead>
+            <tbody id="node-list">
+              <tr class="skeleton-row"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+              <tr class="skeleton-row"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+              <tr class="skeleton-row"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+            </tbody>
+          </table>
+          <div class="empty-state" id="empty-state" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg>
+            <strong>没有匹配的节点</strong>
+            <span>尝试缩短搜索内容，或清除筛选条件。</span>
+          </div>
+        </div>
+        <p class="table-footer"><span id="visible-count">—</span><span id="last-checked">尚未刷新</span></p>
+      </section>
+    </main>
+  </div>
+
+  <div class="error-banner" id="error-banner" role="alert" hidden>
+    <div>
+      <strong>无法连接代理服务</strong>
+      <span id="error-message">请检查 Mihomo 是否正在运行。</span>
+    </div>
+    <button type="button" id="retry">重试</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog class="confirm-dialog" id="mode-dialog" aria-labelledby="dialog-title">
+    <form method="dialog">
+      <div class="dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"/><path d="M10.3 4.7 3.8 16a2 2 0 0 0 1.7 3h13a2 2 0 0 0 1.7-3L13.7 4.7a2 2 0 0 0-3.4 0Z"/></svg>
+      </div>
+      <h2 id="dialog-title">确认切换模式</h2>
+      <p id="dialog-copy">模式变化可能影响 GitHub 连接。</p>
+      <div class="dialog-actions">
+        <button class="ghost-button" value="cancel">取消</button>
+        <button class="primary-button" id="confirm-mode" value="confirm">确认切换</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

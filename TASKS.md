@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| Loopback-only Mihomo proxy control page | Agent 1 | agent-1 | SSH-tunnel access; service/mode/node status; rule/global/direct changes; AUTO/manual selection; subscription refresh; allowlisted API; automated and responsive browser checks | Implementing |
 
 ## Completed
 
