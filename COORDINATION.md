@@ -8,6 +8,7 @@ All work is integrated through GitHub. Each operator edits only its assigned che
 - Agent 2: `/root/ai-workspaces/agent-2`, branch `agent-2`.
 - Shared integration branch: `main`.
 - This operator may edit only `agent-1`. Do not manually change `agent-2`; publish shared rules through a PR to `main` and let each workspace update itself.
+- Canonical remote: `https://github.com/souldowndesu/WebServer.git`. Each workspace owner verifies and updates only its own `origin`; this operator must not change agent-2's Git configuration.
 
 ## Two-layer ownership
 
