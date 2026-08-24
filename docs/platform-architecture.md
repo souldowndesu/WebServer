@@ -47,4 +47,4 @@ queued → running → succeeded
 
 ## 部署闸门
 
-合并产品 PR 不等于正式部署。部署前必须单独记录环境变更，至少包含：停止并移除旧 connectivity-chat 公网服务和 UFW 8765 规则；建立低权限服务账号与私有数据目录；从审核后的 main commit 安装只读代码；配置 TLS 反向代理与 Secure Cookie；通过无回显流程初始化唯一管理员；验证备份、恢复、权限、端口和三项既有服务影响。
+合并产品 PR 不等于正式部署。旧 connectivity-chat、独立 proxy-control、UFW 8765 和内存聊天数据已通过环境 PR #22/#23 退役。新平台部署前仍必须单独记录环境变更，至少包含：建立低权限服务账号与私有数据目录；从审核后的 main commit 安装只读代码；配置 TLS 反向代理与 Secure Cookie；通过无回显流程初始化唯一管理员；验证备份、恢复、权限、端口以及 Mihomo 和 SSH 不受影响。
