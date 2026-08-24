@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| Isolate two-agent development and deployment runtime | Agent 1 | `agent-1` | Atomic workspace lease; deterministic loopback preview ports; per-workspace runtime namespaces; updated AGENTS/skill/runbooks; tests; PR integration; main service no longer reads a development checkout | Implementing Git-level controls first |
 
 ## Completed
 

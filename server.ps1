@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('help', 'connect', 'status', 'progress', 'sync', 'git', 'push', 'prs', 'download', 'upload')]
+    [ValidateSet('help', 'connect', 'status', 'progress', 'sync', 'git', 'push', 'prs', 'workspace', 'download', 'upload')]
     [string]$Action = 'help',
 
     [Parameter(Position = 1)]
@@ -17,7 +17,7 @@ $ErrorActionPreference = 'Stop'
 $script:ControlRoot = $PSScriptRoot
 $script:SshHost = 'aliyun-server'
 $script:RemoteRoot = '/root/ai-workspaces/agent-1'
-$script:Repo = 'souldowndesu/agent'
+$script:Repo = 'souldowndesu/WebServer'
 $script:DownloadsRoot = Join-Path $script:ControlRoot 'downloads'
 $script:StateRoot = Join-Path $script:ControlRoot 'state'
 
@@ -54,6 +54,7 @@ function Sync-ServerDocuments {
         'STATUS.md',
         'TASKS.md',
         'server.ps1',
+        'docs/two-agent-runtime.md',
         'skills/server-workspace-ops/SKILL.md'
     )
 
@@ -118,7 +119,7 @@ function Push-AgentBranchViaLocalRelay {
         throw "The local Git relay must be on branch agent-1, not '$branch'."
     }
 
-    $githubUrl = 'https://github.com/souldowndesu/agent.git'
+    $githubUrl = 'https://github.com/souldowndesu/WebServer.git'
     $remotes = @(& git '-C' $relayPath 'remote')
     if ($remotes -notcontains 'github') {
         Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'remote', 'add', 'github', $githubUrl)
@@ -169,6 +170,7 @@ Usage:
   .\server.ps1 push
   .\server.ps1 prs
   .\server.ps1 connect
+  .\server.ps1 workspace
   .\server.ps1 download <https-url> [local-name]
   .\server.ps1 upload <downloads-file> [remote-relative-path]
 '@
@@ -221,6 +223,10 @@ Usage:
 
     'prs' {
         Invoke-ServerCommand -RemoteCommand "/root/.local/bin/agent-gh pr list --repo $script:Repo --state open"
+    }
+
+    'workspace' {
+        Invoke-ServerCommand -RemoteCommand "env -C $script:RemoteRoot python3 tools/workspace_runtime.py status"
     }
 
     'download' {

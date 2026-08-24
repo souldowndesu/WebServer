@@ -9,10 +9,18 @@ Describe the coherent outcome this pull request should achieve.
 ## Scope and coordination
 
 - Assigned workspace/branch:
+- Workspace lease session:
 - Related task in `TASKS.md`:
 - Conflicts or dependent PRs:
 - [ ] Only the assigned workspace was edited.
 - [ ] Shared rules are published through `main`, not copied manually into a sibling workspace.
+- [ ] The workspace lease was held for material edits and will be released only after a clean handoff.
+
+## Runtime isolation
+
+- Development ports and runtime namespaces used:
+- [ ] Tests used ephemeral ports, or assigned workspace ports were used through `tools/workspace_runtime.py`.
+- [ ] No stable service reads an agent checkout; any deployment change is isolated in the environment workflow.
 
 ## Environment boundary
 

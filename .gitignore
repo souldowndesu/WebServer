@@ -12,6 +12,7 @@
 downloads/
 state/
 mirror/
+.runtime/
 
 # Common generated files
 node_modules/
