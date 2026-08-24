@@ -4,13 +4,13 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 
 ## Agent 1
 
-- State: in progress
-- Current task: isolate two-agent workspace ownership, development runtime resources, and main deployment
+- State: ready
+- Current task: none
 - Branch: `agent-1`
-- Last verification: 13 automated tests pass; proxy-control.service is enabled/active as a low-privilege user on 127.0.0.1:8790; allowlisted API returned 40 nodes in `rule + AUTO`; invalid Host/cross-origin changes were rejected; public TCP 8790 was unreachable; desktop/tablet/mobile SSH-tunnel browser checks had zero errors, failed requests, or horizontal overflow; Mihomo, chat, and GitHub proxy checks remained healthy
-- Pull requests: #5 — clock/chat/API; #6 and #7 — public chat service; #8 — local-only Mihomo GitHub proxy; #10 — proxy control page; #11 — loopback-only control service; all merged
-- Last handoff: proxy control product merged at `a790710`; loopback-only service record merged at `26408ed`; current control state restored to `rule + AUTO`
-- Next action: implement and verify workspace leases, deterministic preview ports, shared-resource rules, and matching skill/runbook guidance
+- Last verification: 25 automated tests pass; workspace doctor reports a clean leased agent-1 checkout with dedicated 127.0.0.1:18761/18762 development ports; duplicate-session rejection and SSH-disconnect cleanup were verified against real listeners; canonical direct and local-relay Git pushes succeed; connectivity-chat.service is enabled/active as connectivity-chat from `/opt/connectivity-chat` on 0.0.0.0:8765 with matching source/deploy hashes and local/public health ok; Mihomo and proxy-control remain active and UFW is unchanged
+- Pull requests: #13 — runtime isolation; #14 and #17 — Git route guidance/relay; #15 and #16 — restricted credential-path migration; #18 and #19 — main-derived chat deployment; all merged
+- Last handoff: atomic leases, deterministic ports, runtime namespaces, updated skill/runbooks, canonical WebServer Git routing, and checkout-independent stable services are complete; neither stable application service reads an agent checkout at runtime
+- Next action: agent-2's owner should fetch/rebase `main`, run the workspace doctor, and update only agent-2's own origin to `https://github.com/souldowndesu/WebServer.git`
 
 ## Agent 2
 
