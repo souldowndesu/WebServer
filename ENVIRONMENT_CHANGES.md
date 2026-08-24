@@ -82,6 +82,27 @@ No server environment changes were made during the workflow-document initializat
 - Rollback: disable and stop only proxy-control.service; remove only /etc/systemd/system/proxy-control.service; daemon-reload; confirm /opt/proxy-control resolves to that exact path before removing it; remove only the proxy-control system account/group and its mihomo supplementary membership; verify no 8790 listener remains. No Mihomo configuration, subscription, Git proxy, UFW, chat service, or agent-2 rollback is required.
 - Coordination impact: the service reads a deployed copy of the main-merged product and does not read either Git workspace at runtime. Agent-2 and public network behavior remain unchanged. Operators access the page with `ssh -N -L 8790:127.0.0.1:8790 aliyun-server` and browse to `http://127.0.0.1:8790`.
 
+### 2026-08-24 — Restricted Git credential path migration to WebServer
+
+- State: planned
+- Owner: Agent 1
+- Dedicated PR: pending
+- Reason: the repository was renamed to `souldowndesu/WebServer`; the existing least-privilege credential helper still authorizes only the old redirected `souldowndesu/agent` path, causing direct pushes to the canonical URL to fail. The operator explicitly authorized the new Git path to simplify pushes.
+- Scope (exact paths/packages/services/settings): replace only the repository path allowlist in `/root/.local/bin/agent-git-credential` from `souldowndesu/agent` and `souldowndesu/agent.git` to `souldowndesu/WebServer` and `souldowndesu/WebServer.git`; preserve root:root mode 0755, HTTPS-only protocol, github.com-only host, get-only operation, token-file location/content/permissions, output format, and all other logic. Change only agent-1's repository-local `origin` URL to `https://github.com/souldowndesu/WebServer.git`. No token rotation/readout, global Git config, package, service, firewall, profile, proxy, GitHub permission, agent-2 checkout, or product-file change.
+- Source URL/version/SHA-256, if applicable: no external artifact. Existing `/root/.local/bin/agent-git-credential` SHA-256 is `b125f86291815aba32c4559eac77132c3ea03352598ce8bd91167df6fd70b1b0`, size 586 bytes, root:root mode 0755. The planned replacement is derived from that exact file with only the two repository path strings changed.
+- Planned actions:
+  1. Reconfirm the helper hash/mode/owner, agent-1 origin, clean leased worktree, and that the helper path allowlist still contains only the old repository path.
+  2. Copy the exact current helper into ignored agent-1 staging for rollback, record its SHA-256, and create a replacement in ignored staging by changing only the two path allowlist strings; never copy, print, modify, or hash-report the token value.
+  3. Verify a diff between staged old/new helpers contains only the path replacement; run `bash -n`; verify the replacement contains github.com plus only the new WebServer path and retains mode 0755 when installed.
+  4. Install the staged replacement atomically at `/root/.local/bin/agent-git-credential` as root:root mode 0755, then set only agent-1's `origin` to `https://github.com/souldowndesu/WebServer.git`.
+  5. With terminal prompting disabled, verify canonical `git fetch`, `git ls-remote`, and a no-change/dry-run push succeed; perform a normal agent-1 push if required to verify the actual path.
+  6. Use a redacted probe that reports only `username=<present>` and `password=<present>` field names to verify the new WebServer path receives credentials, while the old agent path and an unrelated repository path receive no credential fields. Never print credential values.
+- Planned service: not applicable; no service is created or restarted.
+- Actual actions: not applied.
+- Verification and result: baseline only — the existing helper is a 586-byte root:root mode-0755 Bash script with SHA-256 `b125f86291815aba32c4559eac77132c3ea03352598ce8bd91167df6fd70b1b0`; it requires operation `get`, protocol `https`, host `github.com`, and path `souldowndesu/agent` or `souldowndesu/agent.git` before reading the protected token file. Direct fetch/push with canonical WebServer origin currently fails for lack of credentials, while the old URL succeeds through GitHub's repository redirect.
+- Rollback: reinstall the hash-matched original helper from ignored agent-1 staging as root:root mode 0755; restore only agent-1 origin to `https://github.com/souldowndesu/agent.git`; verify old-path fetch/push works and canonical direct access is again refused by the helper. No token, service, package, firewall, product, proxy, UFW, or agent-2 rollback is required.
+- Coordination impact: agent-1 and the local credential relay can use the canonical repository URL after matching tracked script updates merge. Agent-2 is not edited by this operator; after shared instructions merge, its owner must independently verify a clean checkout and change its own origin. The credential remains restricted to one GitHub host and one repository, only under its new canonical path.
+
 ## Entry template
 
 ### YYYY-MM-DD — short title
