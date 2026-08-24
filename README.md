@@ -2,6 +2,51 @@
 
 版本管理工作区位于服务器 `/root/ai-workspaces/agent-1`。操作者本机的 `ssh-local` 目录不另建 Git 仓库，只负责通过本机 SSH 管理服务器、保存文档镜像、缓存外部下载和记录状态。
 
+## 连接测试应用
+
+仓库内包含一个不依赖第三方包的 Python 服务：
+
+- / 显示居中的浏览器本地时间和实时聊天室。
+- GET /api/health 返回服务时间和状态。
+- GET /api/messages?after=0 返回内存中的消息。
+- POST /api/messages 接收 JSON：{"author":"昵称","text":"内容"}。
+- GET /api/events?after=0 使用 Server-Sent Events 推送新消息。
+
+开发运行：
+
+~~~sh
+cd /root/ai-workspaces/agent-1
+python3 -m chat_app.server --host 127.0.0.1 --port 8765
+~~~
+
+自动化验证：
+
+~~~sh
+python3 -m unittest discover -s tests -v
+~~~
+
+本地终端工具可交互聊天：
+
+~~~powershell
+python client/chat_cli.py --url http://SERVER_ADDRESS:8765 --name 本地工具
+~~~
+
+也可只发送一条消息：
+
+~~~powershell
+python client/chat_cli.py --url http://SERVER_ADDRESS:8765 --message "本地端口测试"
+~~~
+
+消息最多保留最近 200 条，仅存在服务器进程内存里，重启服务会清空。这个应用用于临时连通性测试，不应存放敏感信息。
+
+### API 示例
+
+~~~sh
+curl -X POST http://SERVER_ADDRESS:8765/api/messages -H 'Content-Type: application/json' -d '{"author":"tool","text":"hello from local"}'
+~~~
+
+成功时返回 HTTP 201 和创建后的消息。输入为空、类型错误或超过昵称 40 字/消息 500 字时返回 HTTP 400。
+
 ## 最简单的指令
 
 在本目录打开 PowerShell：

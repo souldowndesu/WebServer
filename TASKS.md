@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| Clock page, browser chat, and local CLI connectivity test | Agent 1 | agent-1 | Centered live time page; browser chat; documented HTTP API; local CLI can exchange messages; automated and live port checks pass | Implementing |
 
 ## Completed
 
