@@ -103,7 +103,7 @@ ssh -N -L 8790:127.0.0.1:8790 aliyun-server
 - `connect`：进入服务器交互终端。
 - `workspace`：查看 agent-1 当前租约、分支、工作树和开发端口分配。
 
-GitHub 仓库的规范名称是 `souldowndesu/WebServer`。受限 Git 凭据助手仍只授权旧的 `souldowndesu/agent.git` 兼容地址，GitHub 会把它重定向到新仓库；不要为了消除重定向而扩大凭据权限。
+GitHub 仓库和 Git 远端的规范地址均为 `https://github.com/souldowndesu/WebServer.git`。受限凭据助手已经通过环境 PR #15、#16 迁移到该路径，并继续只授权 github.com 上的这个仓库。
 
 外部文件必须先下载到本机，再上传服务器：
 

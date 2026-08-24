@@ -61,7 +61,7 @@ After fetch/rebase, validate with `python3 tools/workspace_runtime.py doctor --s
 - Download external artifacts to local `downloads/` first, record their source/version, verify SHA-256, upload, and verify SHA-256 again.
 - Do not reveal or copy SSH keys or GitHub tokens. Use `/root/.local/bin/agent-gh` for GitHub CLI operations.
 - When server-to-GitHub push is unreliable, use local `./server.ps1 push`; its restricted SSH credential relay must not be replaced with a token file or printed credential command.
-- Use `souldowndesu/WebServer` for GitHub API/PR commands, but retain the old `souldowndesu/agent.git` Git URL because the least-privilege credential helper is path-restricted and GitHub redirects that compatibility URL. Changing the credential path requires a dedicated environment-change PR.
+- Use `https://github.com/souldowndesu/WebServer.git` for agent-1 origin and the local relay. Environment PRs #15 and #16 migrated the least-privilege helper to this canonical path. Agent-2's owner updates only its own origin after receiving shared rules from `main`.
 - Fetch and rebase on `origin/main` before work. Push each meaningful iteration to `origin/agent-1`. Open a PR for each coherent completed unit and merge only after diff, validation, and coordination checks.
 - Before changing packages, services, global tools, profiles, credential wiring, or anything outside `agent-1`, add a complete entry to `ENVIRONMENT_CHANGES.md` and use a dedicated documentation-only PR. Do not mix that PR with ordinary work.
 - If the worktree contains unrecognized changes, stop and inspect. Never overwrite, reset, or delete them.
