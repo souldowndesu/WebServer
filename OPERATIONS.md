@@ -93,8 +93,8 @@ Assigned runtime resources:
 
 | Purpose | Agent 1 | Agent 2 | Shared/deployed |
 | --- | --- | --- | --- |
-| Control-plane preview | `127.0.0.1:18761` | `127.0.0.1:18861` | legacy TCP 8765 is not a development endpoint |
-| Legacy standalone services | Not assigned | Not assigned | TCP 8765 and 8790 await dedicated environment removal |
+| Control-plane preview | `127.0.0.1:18761` | `127.0.0.1:18861` | Not deployed |
+| Retired legacy ports | Not assigned | Not assigned | TCP 8765 and 8790 must not be reused without registry and environment review |
 | Mihomo client proxy | Do not start | Do not start | `127.0.0.1:7890` |
 
 Tests use ephemeral port `0`. Workspace state belongs under ignored `.runtime/`. For Docker Compose, consume `COMPOSE_PROJECT_NAME` and never set a fixed `container_name`.

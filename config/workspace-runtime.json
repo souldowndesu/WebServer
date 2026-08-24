@@ -5,16 +5,6 @@
       "bind": "127.0.0.1",
       "owner": "server-environment",
       "port": 7890
-    },
-    "legacy-connectivity-chat": {
-      "bind": "0.0.0.0",
-      "owner": "main-deployment",
-      "port": 8765
-    },
-    "legacy-proxy-control": {
-      "bind": "127.0.0.1",
-      "owner": "main-deployment",
-      "port": 8790
     }
   },
   "workspaces": {

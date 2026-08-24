@@ -42,8 +42,7 @@ The canonical registry is `config/workspace-runtime.json`.
 | Agent 1 development | `127.0.0.1:18761-18799` | Only while agent-1 lease is active |
 | Agent 2 development | `127.0.0.1:18861-18899` | Only while agent-2 lease is active |
 | Mihomo proxy | `127.0.0.1:7890` | Shared client endpoint; neither agent starts it |
-| Connectivity chat | `0.0.0.0:8765` | Stable main deployment only |
-| Proxy control | `127.0.0.1:8790` | Stable main deployment only |
+| Retired legacy ports | TCP 8765 and 8790 | Unassigned; do not reuse without registry and environment review |
 
 Development listeners remain loopback-only and are reached through SSH tunnels when browser access is required. No UFW or cloud firewall rule is added for a preview.
 
