@@ -1,6 +1,10 @@
 # 服务器工作控制台
 
-版本管理工作区位于服务器 `/root/ai-workspaces/agent-1`。操作者本机的 `ssh-local` 目录不另建 Git 仓库，只负责通过本机 SSH 管理服务器、保存文档镜像、缓存外部下载和记录状态。
+服务器有两个相互隔离的版本管理工作区：`/root/ai-workspaces/agent-1` 和 `/root/ai-workspaces/agent-2`。两个工作区分别使用同名分支，通过 PR 合并到 `main`；任何 agent 都不能直接修改另一个工作区。
+
+每个工作区还拥有独立的租约、loopback 开发端口、`.runtime` 数据目录和 Compose 命名空间。正式服务只使用审核后的 `main` 部署副本，不读取开发工作区。完整设计见 `docs/two-agent-runtime.md`。
+
+操作者本机的 `ssh-local` 目录不另建产品 Git 仓库，只负责通过本机 SSH 管理服务器、保存文档镜像、缓存外部下载和记录状态。
 
 ## 连接测试应用
 
@@ -16,8 +20,12 @@
 
 ~~~sh
 cd /root/ai-workspaces/agent-1
-python3 -m chat_app.server --host 127.0.0.1 --port 8765
+python3 tools/workspace_runtime.py claim --session chat-preview --task "chat preview"
+python3 tools/workspace_runtime.py run --session chat-preview chat -- \
+  python3 -m chat_app.server --host {host} --port {port}
 ~~~
+
+Agent 1 的聊天预览端口是 18761，Agent 2 是 18861。TCP 8765 只属于正式部署，开发进程不得占用。
 
 自动化验证：
 
@@ -55,8 +63,13 @@ curl -X POST http://SERVER_ADDRESS:8765/api/messages -H 'Content-Type: applicati
 
 ~~~sh
 cd /root/ai-workspaces/agent-1
-python3 -m proxy_control.server --host 127.0.0.1 --port 8790 --socket /run/mihomo/controller.sock
+python3 tools/workspace_runtime.py claim --session proxy-preview --task "proxy control preview"
+python3 tools/workspace_runtime.py run --session proxy-preview proxy-control -- \
+  python3 -m proxy_control.server --host {host} --port {port} \
+  --socket /run/mihomo/controller.sock
 ~~~
+
+Agent 1 的控制页预览端口是 18762，Agent 2 是 18862。TCP 8790 只属于 `/opt/proxy-control` 中的正式部署副本。
 
 从操作者本机建立 SSH 隧道：
 
@@ -79,6 +92,7 @@ ssh -N -L 8790:127.0.0.1:8790 aliyun-server
 .\server.ps1 push
 .\server.ps1 prs
 .\server.ps1 connect
+.\server.ps1 workspace
 ```
 
 - `status`：观察服务器并把快照保存到 `state/SERVER_STATUS.md`。
@@ -87,6 +101,7 @@ ssh -N -L 8790:127.0.0.1:8790 aliyun-server
 - `push`：服务器到 GitHub 不稳定时，通过本机网络安全推送 `agent-1`；token 不保存到本机。
 - `prs`：查看该仓库的开放 PR。
 - `connect`：进入服务器交互终端。
+- `workspace`：查看 agent-1 当前租约、分支、工作树和开发端口分配。
 
 外部文件必须先下载到本机，再上传服务器：
 
@@ -118,6 +133,8 @@ agent 应加载 `skills/server-workspace-ops/SKILL.md` 并遵守 `AGENTS.md`，�
 - `COORDINATION.md`：分支、PR、环境变更和跨工作区协作规范。
 - `STATUS.md`、`TASKS.md`：服务器端工作进程的本地一致副本；不要在本地单独编辑。
 - `ENVIRONMENT_CHANGES.md`：服务器环境及工作区外变更台账。
+- `config/workspace-runtime.json`：两个 agent 的端口、分支和运行命名空间登记表。
+- `tools/workspace_runtime.py`：工作区租约、预检、环境注入和严格端口启动工具。
 - `downloads/`：外部文件的本地下载缓存。
 - `state/SERVER_STATUS.md`：最近一次服务器状态快照。
 

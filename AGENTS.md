@@ -13,11 +13,22 @@ These instructions apply to every agent operating from this local control folder
 
 1. Read `STATUS.md`, `TASKS.md`, `COORDINATION.md`, and `ENVIRONMENT_CHANGES.md` before starting.
 2. Run `./server.ps1 progress` to refresh the local copies from the server.
-3. Fetch and rebase `agent-1` on `origin/main` before editing.
-4. Keep all ordinary work, temporary files, and upload staging under `agent-1`. Remote uploads go to `agent-1/.cache/uploads`.
-5. Push every meaningful iteration to `origin/agent-1`.
-6. When a coherent unit is complete, open a pull request from `agent-1` to `main`; verify it, check coordination conflicts, and merge it when safe.
-7. Update `STATUS.md` and `TASKS.md`, then refresh the local copies with `./server.ps1 progress`.
+3. Confirm the worktree is clean, then atomically claim it before editing: `python3 tools/workspace_runtime.py claim --session <stable-session-id> --task "<task>"`.
+4. If the claim fails, stop. Never stash, reset, delete, or adopt the other session's work. Inspect the reported lease and worktree instead.
+5. Fetch and rebase `agent-1` on `origin/main`, then run `python3 tools/workspace_runtime.py doctor --session <stable-session-id>`.
+6. Keep all ordinary work, temporary files, and upload staging under `agent-1`. Runtime data goes under `.runtime`; remote uploads go to `.cache/uploads`.
+7. Push every meaningful iteration to `origin/agent-1` and keep a draft or open PR visible while work is active.
+8. When a coherent unit is complete, verify it, check coordination conflicts, and merge the pull request into `main` when safe.
+9. Update `STATUS.md` and `TASKS.md`, rebase the clean branch on merged `main`, then release the lease with `python3 tools/workspace_runtime.py release --session <stable-session-id>`.
+10. Run `./server.ps1 progress` so the local mirror matches the server.
+
+## Runtime isolation
+
+- `config/workspace-runtime.json` is the canonical port and namespace registry. Do not invent ports in task-specific instructions.
+- Development listeners bind only to the configured `127.0.0.1` ports. Do not use `8765`, `8790`, or another shared/deployment port for workspace development.
+- Start foreground development commands through `tools/workspace_runtime.py run`; it requires the matching active lease and injects workspace-specific data, cache, log, and Compose namespaces.
+- Tests must request ephemeral ports (`0`) whenever the application supports it. Shared integration tests that cannot isolate their resources must run serially.
+- Stable services belong to `main`-derived deployment artifacts, never a mutable agent checkout. Package, service, firewall, deployment-directory, or shared-database changes use the environment-change workflow.
 
 ## Environment and outside-workspace changes
 

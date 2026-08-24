@@ -9,7 +9,9 @@
 | Editable server workspace | `/root/ai-workspaces/agent-1` |
 | Assigned branch | `agent-1` |
 | Integration branch | `main` |
-| GitHub repository | `souldowndesu/agent` |
+| GitHub repository | `souldowndesu/WebServer` |
+| Agent 1 development ports | `127.0.0.1:18761-18799` |
+| Agent 2 development ports | `127.0.0.1:18861-18899` |
 | Safe remote upload staging | `/root/ai-workspaces/agent-1/.cache/uploads` |
 | Server GitHub CLI wrapper | `/root/.local/bin/agent-gh` |
 
@@ -25,6 +27,7 @@ Prefer the local wrapper:
 .\server.ps1 git
 .\server.ps1 push
 .\server.ps1 prs
+.\server.ps1 workspace
 ```
 
 Use `connect` only when an interactive shell is needed:
@@ -51,6 +54,50 @@ The server's external network is not trusted for reliable downloads. Use this se
 ```
 
 Do not upload directly into `/usr`, `/opt`, `/root/.local`, another workspace, or the repository source tree. Stage first, verify, then perform an explicitly authorized and documented installation.
+
+## Workspace lease and development runtime
+
+Every editing session claims its own checkout before changing files. Choose a stable, non-secret session identifier and reuse it for renew/release commands:
+
+```sh
+cd /root/ai-workspaces/agent-1
+python3 tools/workspace_runtime.py claim \
+  --session codex-example-task \
+  --task "short task description"
+python3 tools/workspace_runtime.py doctor --session codex-example-task
+```
+
+If claim reports another lease or an unowned dirty tree, stop and inspect. Do not clear, stash, reset, or overwrite it. For a long task:
+
+```sh
+python3 tools/workspace_runtime.py renew --session codex-example-task
+```
+
+Run a preview with the assigned loopback address and strict named port:
+
+```sh
+python3 tools/workspace_runtime.py run \
+  --session codex-example-task chat -- \
+  python3 -m chat_app.server --host {host} --port {port}
+```
+
+The wrapper exports `APP_INSTANCE`, `APP_HOST`, `APP_PORT`, `APP_RUNTIME_DIR`, `APP_DATA_DIR`, `APP_CACHE_DIR`, `APP_LOG_DIR`, and `COMPOSE_PROJECT_NAME`. It refuses an occupied port. Keep the command in the foreground so its lifecycle stays visible.
+
+When the handoff is recorded and the worktree is clean:
+
+```sh
+python3 tools/workspace_runtime.py release --session codex-example-task
+```
+
+Assigned runtime resources:
+
+| Purpose | Agent 1 | Agent 2 | Shared/deployed |
+| --- | --- | --- | --- |
+| Chat preview | `127.0.0.1:18761` | `127.0.0.1:18861` | `0.0.0.0:8765` |
+| Proxy-control preview | `127.0.0.1:18762` | `127.0.0.1:18862` | `127.0.0.1:8790` |
+| Mihomo client proxy | Do not start | Do not start | `127.0.0.1:7890` |
+
+Tests use ephemeral port `0`. Workspace state belongs under ignored `.runtime/`. For Docker Compose, consume `COMPOSE_PROJECT_NAME` and never set a fixed `container_name`.
 
 ## Git and GitHub
 
@@ -83,7 +130,7 @@ Open and merge a completed unit:
 
 ```sh
 cd /root/ai-workspaces/agent-1
-/root/.local/bin/agent-gh pr create --base main --head agent-1 --fill
+/root/.local/bin/agent-gh pr create --repo souldowndesu/WebServer --base main --head agent-1 --fill
 /root/.local/bin/agent-gh pr checks <number>
 /root/.local/bin/agent-gh pr merge <number> --merge
 ```
@@ -108,9 +155,12 @@ Packages, services, global tools, profiles, credential wiring, and files outside
 
 An unavoidable non-environment edit outside `agent-1` follows the same process. Ordinary non-environment edits outside `agent-1` are prohibited.
 
+Stable services are installed only from a reviewed `main` commit into service-owned deployment paths such as `/opt/proxy-control`. A systemd unit must never point at `/root/ai-workspaces/agent-1` or `/root/ai-workspaces/agent-2`. Deployment changes are serialized; record the exact source commit and deployed/source hashes.
+
 ## Failure boundaries
 
 - If SSH fails, run `ssh -v aliyun-server` only for diagnosis and redact sensitive paths or values from shared output.
 - If GitHub access fails, verify `/root/.local/bin/agent-gh auth status`; do not print or read the token file.
 - If a download is incomplete or its hash differs, discard the staged copy and retry from the local machine.
 - If the server worktree is dirty with unrecognized changes, stop and inspect; do not reset, overwrite, or delete them.
+- If a lease is expired but the worktree is dirty, treat it as an unfinished handoff. Do not run `clear-expired` until ownership and preservation are resolved.

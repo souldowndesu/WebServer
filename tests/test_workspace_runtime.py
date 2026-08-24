@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
+import signal
 import socket
 import subprocess
+import sys
 import tempfile
+import time
 import unittest
 from datetime import timedelta
 from pathlib import Path
@@ -11,6 +15,7 @@ from pathlib import Path
 from tools.workspace_runtime import (
     WorkspaceRuntime,
     WorkspaceRuntimeError,
+    build_parser,
     format_time,
     utc_now,
 )
@@ -171,6 +176,151 @@ class WorkspaceRuntimeTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(WorkspaceRuntimeError, "must be on branch"):
             self.runtime.claim(session="session-one", task="wrong branch")
+
+    def test_run_command_parses_documented_argument_order(self) -> None:
+        arguments = build_parser().parse_args(
+            [
+                "run",
+                "--session",
+                "session-one",
+                "app",
+                "--",
+                "python3",
+                "-V",
+            ]
+        )
+        self.assertEqual(arguments.session, "session-one")
+        self.assertEqual(arguments.purpose, "app")
+        self.assertEqual(arguments.program[-2:], ["python3", "-V"])
+
+    def test_run_forwards_termination_and_releases_child_port(self) -> None:
+        self.claim()
+        script = Path(__file__).resolve().parents[1] / "tools/workspace_runtime.py"
+        child_code = (
+            "import os,signal,socket; "
+            "listener=socket.socket(); "
+            "listener.bind((os.environ['APP_HOST'],int(os.environ['APP_PORT']))); "
+            "listener.listen(); "
+            "signal.pause()"
+        )
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                str(script),
+                "--root",
+                str(self.root),
+                "--config",
+                str(self.config_path),
+                "run",
+                "--session",
+                "session-one",
+                "app",
+                "--",
+                sys.executable,
+                "-c",
+                child_code,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        try:
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline:
+                probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                result = probe.connect_ex(("127.0.0.1", self.port))
+                probe.close()
+                if result == 0:
+                    break
+                if process.poll() is not None:
+                    self.fail("workspace runtime exited before the child listened")
+                time.sleep(0.05)
+            else:
+                self.fail("child did not bind the assigned port")
+
+            process.terminate()
+            process.wait(timeout=5)
+            self.assertTrue(self.runtime.port_available("app"))
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=5)
+        self.runtime.release(session="session-one")
+
+    def test_run_stops_child_when_launcher_disappears(self) -> None:
+        self.claim()
+        script = Path(__file__).resolve().parents[1] / "tools/workspace_runtime.py"
+        child_code = (
+            "import os,signal,socket; "
+            "listener=socket.socket(); "
+            "listener.bind((os.environ['APP_HOST'],int(os.environ['APP_PORT']))); "
+            "listener.listen(); "
+            "signal.pause()"
+        )
+        wrapper_command = [
+            sys.executable,
+            str(script),
+            "--root",
+            str(self.root),
+            "--config",
+            str(self.config_path),
+            "run",
+            "--session",
+            "session-one",
+            "app",
+            "--",
+            sys.executable,
+            "-c",
+            child_code,
+        ]
+        launcher_code = (
+            "import json,socket,subprocess,sys,time; "
+            "command=json.loads(sys.argv[1]); "
+            "host=sys.argv[2]; port=int(sys.argv[3]); "
+            "process=subprocess.Popen(command,stdout=subprocess.DEVNULL,"
+            "stderr=subprocess.DEVNULL); "
+            "print(process.pid,flush=True); "
+            "deadline=time.monotonic()+3; "
+            "connected=False; "
+            "\nwhile time.monotonic()<deadline:\n"
+            " probe=socket.socket(); result=probe.connect_ex((host,port)); probe.close();\n"
+            " if result==0: connected=True; break\n"
+            " if process.poll() is not None: break\n"
+            " time.sleep(0.05)\n"
+            "\nif not connected: raise SystemExit(2)\n"
+        )
+        launcher = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                launcher_code,
+                json.dumps(wrapper_command),
+                "127.0.0.1",
+                str(self.port),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        wrapper_pid = int(launcher.stdout.readline().strip())
+        try:
+            _, launcher_error = launcher.communicate(timeout=5)
+            self.assertEqual(launcher.returncode, 0, launcher_error)
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                if self.runtime.port_available("app"):
+                    break
+                time.sleep(0.05)
+            else:
+                self.fail("child port stayed open after its launcher exited")
+        finally:
+            try:
+                os.kill(wrapper_pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            if launcher.poll() is None:
+                launcher.kill()
+                launcher.wait(timeout=5)
+        self.runtime.release(session="session-one")
 
 
 if __name__ == "__main__":

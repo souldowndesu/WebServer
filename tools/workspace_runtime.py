@@ -7,10 +7,12 @@ import json
 import os
 import re
 import shlex
+import signal
 import socket
 import subprocess
 import sys
 import tempfile
+import threading
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -434,6 +436,61 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def run_foreground(command: Sequence[str], environment: dict[str, str]) -> int:
+    parent_pid = os.getppid()
+    if parent_pid <= 1:
+        raise WorkspaceRuntimeError(
+            "run must stay attached to an interactive parent process"
+        )
+    child = subprocess.Popen(
+        command,
+        env=environment,
+        start_new_session=True,
+    )
+
+    def forward(signum: int, _frame: Any) -> None:
+        if child.poll() is None:
+            try:
+                os.killpg(child.pid, signum)
+            except ProcessLookupError:
+                pass
+
+    monitor_stop = threading.Event()
+
+    def monitor_parent() -> None:
+        while not monitor_stop.wait(0.25):
+            if os.getppid() != parent_pid:
+                forward(signal.SIGTERM, None)
+                return
+
+    forwarded_signals = (signal.SIGHUP, signal.SIGINT, signal.SIGTERM)
+    previous_handlers = {
+        signum: signal.signal(signum, forward) for signum in forwarded_signals
+    }
+    monitor = threading.Thread(target=monitor_parent, daemon=True)
+    monitor.start()
+    try:
+        return child.wait()
+    finally:
+        monitor_stop.set()
+        monitor.join(timeout=1)
+        for signum, handler in previous_handlers.items():
+            signal.signal(signum, handler)
+        if child.poll() is None:
+            try:
+                os.killpg(child.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                child.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                child.wait(timeout=5)
+
+
 def main(arguments: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(arguments)
@@ -495,7 +552,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
         command = [replacements.get(value, value) for value in command]
         child_environment = os.environ.copy()
         child_environment.update(environment)
-        return subprocess.run(command, env=child_environment, check=False).returncode
+        return run_foreground(command, child_environment)
     return 0
 
 
