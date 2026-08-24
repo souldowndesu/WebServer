@@ -4,13 +4,13 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 
 ## Agent 1
 
-- State: ready
-- Current task: none
+- State: review-ready
+- Current task: authenticated multi-user management platform backend
 - Branch: `agent-1`
-- Last verification: 25 automated tests pass; workspace doctor reports a clean leased agent-1 checkout with dedicated 127.0.0.1:18761/18762 development ports; duplicate-session rejection and SSH-disconnect cleanup were verified against real listeners; canonical direct and local-relay Git pushes succeed; connectivity-chat.service is enabled/active as connectivity-chat from `/opt/connectivity-chat` on 0.0.0.0:8765 with matching source/deploy hashes and local/public health ok; Mihomo and proxy-control remain active and UFW is unchanged
-- Pull requests: #13 — runtime isolation; #14 and #17 — Git route guidance/relay; #15 and #16 — restricted credential-path migration; #18 and #19 — main-derived chat deployment; all merged
-- Last handoff: atomic leases, deterministic ports, runtime namespaces, updated skill/runbooks, canonical WebServer Git routing, and checkout-independent stable services are complete; neither stable application service reads an agent checkout at runtime
-- Next action: agent-2's owner should fetch/rebase `main`, run the workspace doctor, and update only agent-2's own origin to `https://github.com/souldowndesu/WebServer.git`
+- Last verification: 24 automated tests pass; workspace doctor exposes only the loopback `control-plane` preview; a foreground runtime smoke test returned 200 for `/api/v1/health` and `/`; six local-only UI QA captures at 1440/820/390 widths had no page overflow or browser errors
+- Pull requests: Draft PR #21 contains the authenticated multi-user management platform
+- Last handoff: core backend, data model, capacity/security policy, old source removal, root/API/frontend guidance, and local-only UI direction are complete; production deployment remains behind the documented HTTPS and environment-change gate
+- Next action: push the final coherent iteration, mark PR #21 ready, inspect checks/conflicts, and merge when safe
 
 ## Agent 2
 

@@ -19,8 +19,7 @@ Git ownership and runtime ownership are separate:
 | Checkout | `/root/ai-workspaces/agent-1` | `/root/ai-workspaces/agent-2` | None |
 | Branch | `agent-1` | `agent-2` | `main` integrates PRs |
 | Lease file | `agent-1/.runtime/workspace-lease.json` | `agent-2/.runtime/workspace-lease.json` | None |
-| Chat preview | `127.0.0.1:18761` | `127.0.0.1:18861` | TCP 8765 is deployment-only |
-| Proxy-control preview | `127.0.0.1:18762` | `127.0.0.1:18862` | TCP 8790 is deployment-only |
+| Control-plane preview | `127.0.0.1:18761` | `127.0.0.1:18861` | TCP 8765 remains legacy deployment-only until its dedicated removal change |
 | Compose project | `agent1` | `agent2` | Deployment chooses its own name |
 | Data/cache/logs | `agent-1/.runtime/*` | `agent-2/.runtime/*` | Deployed service-owned paths |
 
@@ -44,7 +43,7 @@ A lease is deliberately stored under ignored `.runtime/`; it coordinates session
 - Never hard-code `container_name`. Compose receives the configured `COMPOSE_PROJECT_NAME`; volumes, networks, databases, Redis keys, queue names, uploads, and logs must also include `APP_INSTANCE` or live under `APP_RUNTIME_DIR`.
 - Unit tests use TCP port `0` and temporary directories. Only tests that genuinely require a shared installed service may use deployment ports, and those tests run serially.
 - TCP 7890 is a shared client-facing proxy endpoint. Agents may consume it but must not start a second Mihomo instance.
-- TCP 8765 and 8790 are owned by deployed `main` artifacts. Agent previews must never bind them.
+- Legacy TCP 8765 and 8790 remain owned by deployed `main` artifacts until their dedicated environment-removal change. Agent previews must never bind them.
 - A stable systemd service must not read either agent checkout. Deployment changes are serialized through a dedicated environment-change PR and operate only on a reviewed `main` commit.
 
 ## Before starting work

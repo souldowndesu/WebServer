@@ -6,12 +6,12 @@
       "owner": "server-environment",
       "port": 7890
     },
-    "connectivity-chat": {
+    "legacy-connectivity-chat": {
       "bind": "0.0.0.0",
       "owner": "main-deployment",
       "port": 8765
     },
-    "proxy-control": {
+    "legacy-proxy-control": {
       "bind": "127.0.0.1",
       "owner": "main-deployment",
       "port": 8790
@@ -27,8 +27,7 @@
         18799
       ],
       "ports": {
-        "chat": 18761,
-        "proxy-control": 18762
+        "control-plane": 18761
       },
       "runtime_dir": ".runtime"
     },
@@ -41,8 +40,7 @@
         18899
       ],
       "ports": {
-        "chat": 18861,
-        "proxy-control": 18862
+        "control-plane": 18861
       },
       "runtime_dir": ".runtime"
     }
