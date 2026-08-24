@@ -107,7 +107,7 @@ No server environment changes were made during the workflow-document initializat
 
 - State: planned
 - Owner: Agent 1
-- Dedicated PR: pending
+- Dedicated PR: #18 (plan)
 - Reason: remove the remaining stable-service dependency on the mutable agent-1 checkout so agent-1 and agent-2 can rebase, edit, and preview independently without changing what connectivity-chat.service will execute on restart.
 - Scope (exact paths/packages/services/settings): create a non-login connectivity-chat system user/group; create `/opt/connectivity-chat` containing exactly the reviewed main `chat_app` package; replace `/etc/systemd/system/connectivity-chat.service` so it runs as connectivity-chat from `/opt/connectivity-chat`; reload systemd and restart only connectivity-chat.service. Preserve TCP 8765, its existing UFW rules, public bind, memory/task limits, and all unrelated services. No package, credential, profile, global proxy, agent-2, cloud firewall, database, or Mihomo change.
 - Source URL/version/SHA-256, if applicable: no external artifact; planned application source is repository main commit `62aba332b7220fbb38b972ca80cac519dfd708f0`. Baseline source SHA-256 values are `3dbe8613599ff0ae09b3551575270114d62c3bf161cca507553abb469af17430` for `chat_app/__init__.py`, `ab63078bbb6aa82a4675bc18fb72cbbeb71ea1e8f67773a1c1b7fdcb644d1ad0` for `chat_app/server.py`, and `d94b7e12ff7b293680be867ba3dc25de647f591704e9b940b3cc69b523ed878f` for `chat_app/static/index.html`.
