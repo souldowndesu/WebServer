@@ -103,6 +103,28 @@ No server environment changes were made during the workflow-document initializat
 - Rollback: reinstall the hash-matched original helper from ignored agent-1 staging as root:root mode 0755; restore only agent-1 origin to `https://github.com/souldowndesu/agent.git`; verify old-path fetch/push works and canonical direct access is again refused by the helper. No token, service, package, firewall, product, proxy, UFW, or agent-2 rollback is required.
 - Coordination impact: agent-1 now pushes directly through the canonical URL. The checked-in local relay still needs a normal follow-up PR to replace its old compatibility URL; until that merges, prefer direct server pushes. Agent-2 was not edited by this operator; after shared instructions merge, its owner must independently verify a clean checkout and change its own origin. The credential remains restricted to one GitHub host and one repository, only under its new canonical path.
 
+### 2026-08-24 — Main-derived connectivity chat deployment
+
+- State: planned
+- Owner: Agent 1
+- Dedicated PR: #18 (plan)
+- Reason: remove the remaining stable-service dependency on the mutable agent-1 checkout so agent-1 and agent-2 can rebase, edit, and preview independently without changing what connectivity-chat.service will execute on restart.
+- Scope (exact paths/packages/services/settings): create a non-login connectivity-chat system user/group; create `/opt/connectivity-chat` containing exactly the reviewed main `chat_app` package; replace `/etc/systemd/system/connectivity-chat.service` so it runs as connectivity-chat from `/opt/connectivity-chat`; reload systemd and restart only connectivity-chat.service. Preserve TCP 8765, its existing UFW rules, public bind, memory/task limits, and all unrelated services. No package, credential, profile, global proxy, agent-2, cloud firewall, database, or Mihomo change.
+- Source URL/version/SHA-256, if applicable: no external artifact; planned application source is repository main commit `62aba332b7220fbb38b972ca80cac519dfd708f0`. Baseline source SHA-256 values are `3dbe8613599ff0ae09b3551575270114d62c3bf161cca507553abb469af17430` for `chat_app/__init__.py`, `ab63078bbb6aa82a4675bc18fb72cbbeb71ea1e8f67773a1c1b7fdcb644d1ad0` for `chat_app/server.py`, and `d94b7e12ff7b293680be867ba3dc25de647f591704e9b940b3cc69b523ed878f` for `chat_app/static/index.html`.
+- Planned actions:
+  1. Capture the exact current unit in ignored agent-1 staging and record its SHA-256 for rollback; confirm it still runs as root from `/root/ai-workspaces/agent-1` before replacement.
+  2. Reconfirm the connectivity-chat account/group and `/opt/connectivity-chat` are absent, the agent-1 worktree is clean/leased, and source commit/hashes still match reviewed main.
+  3. Stage the replacement unit under `/root/ai-workspaces/agent-1/.cache/uploads`, verify its SHA-256, and validate it with `systemd-analyze verify` before installation.
+  4. Create the non-login connectivity-chat system account/group without supplementary groups or a writable home.
+  5. Create `/opt/connectivity-chat` and install exactly the three `chat_app` product files from reviewed main as root:root, directories mode 0755 and files mode 0644; do not copy Git metadata, tests, runtime leases, uploads, credentials, or environment files.
+  6. Stop only connectivity-chat.service, install the validated unit at mode 0644, run `systemctl daemon-reload`, and start/enable only connectivity-chat.service.
+  7. Verify deployed/source hashes, root-owned read-only product files, the exact service account and working directory, enabled/active state, ExecMainStatus 0, 0.0.0.0:8765 listener, local/public health, unchanged UFW rules, and continued health of mihomo.service and proxy-control.service.
+- Planned service: runs `/usr/bin/python3 -m chat_app.server --host 0.0.0.0 --port 8765` as the non-login connectivity-chat user/group from `/opt/connectivity-chat`; disables bytecode writes; retains restart-on-failure, NoNewPrivileges, private devices/tmp, strict filesystem/home/kernel/control-group protection, restricted address families, the 128 MiB memory ceiling, and the 64-task ceiling. The service has no writable application directory.
+- Actual actions: not applied.
+- Verification and result: baseline only — the existing unit is enabled/active with ExecMainStatus 0, User root, WorkingDirectory `/root/ai-workspaces/agent-1`, MemoryMax 128 MiB, and TasksMax 64; it listens on 0.0.0.0:8765 and local health is ok. The target account/group and `/opt/connectivity-chat` are absent. The operator explicitly authorized discarding all test/in-memory messages; the planned restart will clear them and no preservation step is required.
+- Rollback: stop only connectivity-chat.service; reinstall the hash-recorded original unit from ignored agent-1 staging; run daemon-reload and restart/enable connectivity-chat.service; verify root plus WorkingDirectory `/root/ai-workspaces/agent-1`, port 8765, and health are restored. Confirm `/opt/connectivity-chat` resolves to that exact path before removing it, then remove only the connectivity-chat system account/group. No UFW, Mihomo, proxy-control, agent-2, package, or credential rollback is required.
+- Coordination impact: the service restart causes brief TCP 8765 downtime and clears its in-memory test messages. After migration, neither agent checkout is read at runtime; both agents may rebase/edit independently, while future stable deployment updates remain serialized environment changes sourced from reviewed main commits.
+
 ## Entry template
 
 ### YYYY-MM-DD — short title
