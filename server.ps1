@@ -119,7 +119,9 @@ function Push-AgentBranchViaLocalRelay {
         throw "The local Git relay must be on branch agent-1, not '$branch'."
     }
 
-    $githubUrl = 'https://github.com/souldowndesu/WebServer.git'
+    # The restricted credential helper is path-scoped to this compatibility URL.
+    # GitHub redirects it to the canonical souldowndesu/WebServer repository.
+    $githubUrl = 'https://github.com/souldowndesu/agent.git'
     $remotes = @(& git '-C' $relayPath 'remote')
     if ($remotes -notcontains 'github') {
         Invoke-CheckedNative -Command 'git' -Arguments @('-C', $relayPath, 'remote', 'add', 'github', $githubUrl)
