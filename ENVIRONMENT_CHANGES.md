@@ -43,7 +43,7 @@ No server environment changes were made during the workflow-document initializat
 
 - State: planned
 - Owner: Agent 1
-- Dedicated PR: pending
+- Dedicated PR: #8
 - Reason: use the operator-provided private subscription to improve unreliable server-to-GitHub HTTPS traffic while keeping proxy access local to the server.
 - Scope (exact paths/packages/services/settings): create system user/group mihomo; install /usr/local/bin/mihomo; create /etc/mihomo/config.yaml, /var/lib/mihomo, and /etc/systemd/system/mihomo.service; enable mihomo.service; set only the agent-1 repository-local Git key http.https://github.com.proxy to http://127.0.0.1:7890. No UFW rule, global shell proxy, global Git proxy, credential helper, agent-2, or public proxy listener changes.
 - Source URL/version/SHA-256, if applicable: official MetaCubeX/mihomo v1.19.30 compatible amd64 asset from https://github.com/MetaCubeX/mihomo/releases/download/v1.19.30/mihomo-linux-amd64-compatible-v1.19.30.gz; SHA-256 db214c7a2517e63c150d123178d16d102e03a241ccdae4e5e07ffbe9cf56c6f9 matched locally and at /root/ai-workspaces/agent-1/.cache/uploads/mihomo-linux-amd64-compatible-v1.19.30.gz.
