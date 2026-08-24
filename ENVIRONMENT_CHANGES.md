@@ -65,7 +65,7 @@ No server environment changes were made during the workflow-document initializat
 
 - State: planned
 - Owner: Agent 1
-- Dedicated PR: pending
+- Dedicated PR: #11
 - Reason: run the merged proxy control dashboard as a restartable, low-privilege service that the operator can reach through an authenticated SSH tunnel without exposing control access to the public network.
 - Scope (exact paths/packages/services/settings): create system user/group proxy-control and add that user to the existing mihomo supplementary group; create /opt/proxy-control containing the merged `proxy_control` package; create /etc/systemd/system/proxy-control.service; enable and start proxy-control.service on 127.0.0.1:8790. No package installation, UFW rule, cloud firewall change, public listener, Mihomo TCP controller, credential, profile, agent-2, or global proxy setting change.
 - Source URL/version/SHA-256, if applicable: no external artifact; application source is repository main merge commit a7907104e0990a8b03abd4d0f551ced1d1bd0fc4.
