@@ -366,6 +366,12 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": {"code": "invalid_json", "message": "请求体不是有效 JSON。"}})
         except (TypeError, ValueError):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": {"code": "invalid_value", "message": "请求字段值无效。"}})
+        except Exception as error:
+            self.log_error("unhandled request error (%s)", type(error).__name__)
+            self._send_json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": {"code": "internal_error", "message": "服务器处理请求时发生内部错误。"}},
+            )
 
     def _origin_allowed(self) -> bool:
         origin = self.headers.get("Origin")

@@ -4,13 +4,13 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 
 ## Agent 1
 
-- State: active
+- State: review-ready
 - Current task: authenticated multi-user management platform backend
 - Branch: `agent-1`
-- Last verification: clean agent-1 checkout claimed by `codex-account-platform-20260824`; rebased on `origin/main`; workspace doctor passed with dedicated 127.0.0.1:18761/18762 development ports; no open pull requests were present at claim time
-- Pull requests: Draft PR pending for the authenticated multi-user management platform
-- Last handoff: previous runtime-isolation work is complete; this session is replacing the public clock/chat test surface with an authenticated, account-isolated management platform
-- Next action: publish the task claim, inspect the two operator-provided desktop references, freeze the backend/data contract, and implement through isolated tests
+- Last verification: 24 automated tests pass; workspace doctor exposes only the loopback `control-plane` preview; a foreground runtime smoke test returned 200 for `/api/v1/health` and `/`; six local-only UI QA captures at 1440/820/390 widths had no page overflow or browser errors
+- Pull requests: Draft PR #21 contains the authenticated multi-user management platform
+- Last handoff: core backend, data model, capacity/security policy, old source removal, root/API/frontend guidance, and local-only UI direction are complete; production deployment remains behind the documented HTTPS and environment-change gate
+- Next action: push the final coherent iteration, mark PR #21 ready, inspect checks/conflicts, and merge when safe
 
 ## Agent 2
 

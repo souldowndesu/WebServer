@@ -451,6 +451,18 @@ class ControlPlaneTests(unittest.TestCase):
         self.assertNotIn("never-leak", encoded)
         self.assertNotIn("subscriptionInfo", encoded)
 
+    def test_unexpected_internal_errors_are_sanitized(self):
+        def broken_status():
+            raise RuntimeError("internal detail must not leak")
+
+        self.proxy.status = broken_status
+        status, body, _ = self.request("/api/v1/proxy/status", token=self.alice_token)
+        self.assertEqual(status, 500, body)
+        self.assertEqual(body["error"]["code"], "internal_error")
+        self.assertNotIn("internal detail", json.dumps(body))
+        status, body, _ = self.request("/api/v1/health")
+        self.assertEqual(status, 200, body)
+
     def test_cross_origin_and_cookie_csrf_are_rejected(self):
         status, body, _ = self.request(
             "/api/v1/me/settings",

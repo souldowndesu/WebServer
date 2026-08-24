@@ -77,8 +77,8 @@ Run a preview with the assigned loopback address and strict named port:
 
 ```sh
 python3 tools/workspace_runtime.py run \
-  --session codex-example-task chat -- \
-  python3 -m chat_app.server --host {host} --port {port}
+  --session codex-example-task control-plane -- \
+  python3 -m control_plane.server --host {host} --port {port} --data-root "$APP_DATA_DIR"
 ```
 
 The wrapper exports `APP_INSTANCE`, `APP_HOST`, `APP_PORT`, `APP_RUNTIME_DIR`, `APP_DATA_DIR`, `APP_CACHE_DIR`, `APP_LOG_DIR`, and `COMPOSE_PROJECT_NAME`. It refuses an occupied port. Keep the command in the foreground so its lifecycle stays visible.
@@ -93,8 +93,8 @@ Assigned runtime resources:
 
 | Purpose | Agent 1 | Agent 2 | Shared/deployed |
 | --- | --- | --- | --- |
-| Chat preview | `127.0.0.1:18761` | `127.0.0.1:18861` | `0.0.0.0:8765` |
-| Proxy-control preview | `127.0.0.1:18762` | `127.0.0.1:18862` | `127.0.0.1:8790` |
+| Control-plane preview | `127.0.0.1:18761` | `127.0.0.1:18861` | legacy TCP 8765 is not a development endpoint |
+| Legacy standalone services | Not assigned | Not assigned | TCP 8765 and 8790 await dedicated environment removal |
 | Mihomo client proxy | Do not start | Do not start | `127.0.0.1:7890` |
 
 Tests use ephemeral port `0`. Workspace state belongs under ignored `.runtime/`. For Docker Compose, consume `COMPOSE_PROJECT_NAME` and never set a fixed `container_name`.
@@ -157,7 +157,7 @@ Packages, services, global tools, profiles, credential wiring, and files outside
 
 An unavoidable non-environment edit outside `agent-1` follows the same process. Ordinary non-environment edits outside `agent-1` are prohibited.
 
-Stable services are installed only from a reviewed `main` commit into service-owned deployment paths such as `/opt/proxy-control`. A systemd unit must never point at `/root/ai-workspaces/agent-1` or `/root/ai-workspaces/agent-2`. Deployment changes are serialized; record the exact source commit and deployed/source hashes.
+Stable services are installed only from a reviewed `main` commit into service-owned deployment paths such as `/opt/account-control`. A systemd unit must never point at `/root/ai-workspaces/agent-1` or `/root/ai-workspaces/agent-2`. Deployment changes are serialized; record the exact source commit and deployed/source hashes.
 
 ## Failure boundaries
 
