@@ -11,12 +11,12 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
-| Interactive account-platform UI and temporary single-area deployment | Agent 1 | `agent-1` | Real login and API-backed personal settings, planner/sync, contacts/messages, blogs/review, inference, admin accounts and admin-only global proxy; readable non-tiny typography; responsive/keyboard/browser QA; reviewed main-derived loopback deployment reachable only through SSH tunnel; workspace test port returned afterward | User accepted the current UI despite known polish defects as a temporary base template; 25 tests pass after its byte-identical promotion to `control_plane/ui`, with the earlier 9-route/6-capture browser run and real Windows adapter/tester-account sync still valid; product PR #26 is ready for merge, followed by a dedicated environment deployment PR |
 
 ## Completed
 
 | Task | Owner | Pull request | Verification | Result |
 | --- | --- | --- | --- | --- |
+| Interactive account-platform UI and temporary single-area deployment | Agent 1 | #26, #27, #28, #29 | User acceptance; 25 tests; real 9-route/6-capture browser QA; Windows adapter and tester-account sync; exact main/UI/data migration checks; hardened low-privilege systemd state; local/public connectivity and unchanged UFW/Mihomo | Complete — accepted base template runs from main-derived `/opt/account-control` on loopback 8790 with preserved private data in `/var/lib/account-control`; accessible only through SSH tunnel; agent-1 preview stopped and 18761 returned; final visual/interaction polish and public HTTPS remain future work |
 | Authenticated multi-user management platform | Agent 1 | #21, #22, #23, #24 | 24 tests; workspace doctor; real HTTP health/root smoke; 6 local-only responsive captures without overflow/browser errors; public/local legacy-port closure; unchanged Mihomo health | Complete — account-isolated backend and handoff contract merged; old source, in-memory chat data, services, users, paths, firewall rule, and runtime registrations retired; formal UI and HTTPS deployment remain gated |
 | Initialize shared two-agent repository | Shared | #1 | Branches and coordination files present | Complete |
 | Establish server operations and governance | Agent 1 | #2 | SSH/status/Git/PR helpers; PowerShell parse; hash-matched upload; root rules and skill reviewed | Complete |
