@@ -474,6 +474,16 @@ class SharedStore:
             rows = db.execute("SELECT * FROM blog_reviews WHERE status='pending' ORDER BY created_at").fetchall()
         return [dict(row) for row in rows]
 
+    def blog_reviews_for_account(self, account_id: str, *, limit: int = 50) -> list[dict[str, Any]]:
+        limit = max(1, min(100, int(limit)))
+        with self._connect() as db:
+            rows = db.execute(
+                """SELECT account_id,revision_id,status,note,created_at,reviewed_at
+                   FROM blog_reviews WHERE account_id=? ORDER BY created_at DESC LIMIT ?""",
+                (account_id, limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
     def review_blog(self, reviewer_id: str, account_id: str, revision_id: str, decision: str, note: str) -> dict[str, Any]:
         if decision not in {"approved", "rejected"}:
             raise ValidationError("invalid_review_decision", "审核结果无效。")

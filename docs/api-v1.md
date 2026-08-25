@@ -11,7 +11,7 @@
 | POST | `/api/v1/auth/logout` | 登录 | 撤销当前会话 |
 | GET | `/api/v1/me` | 登录 | 当前资料与独立设置 |
 | PATCH | `/api/v1/me/profile` | 登录 | 昵称与头像 data URL |
-| PATCH | `/api/v1/me/settings` | 登录 | 主题、语言和个人代理偏好 |
+| PATCH | `/api/v1/me/settings` | 登录 | 主题和语言；代理不属于个人设置 |
 | GET | `/api/v1/users` | 登录 | 可见账号、私人备注和连接状态 |
 | PUT | `/api/v1/users/{id}/remark` | 登录 | 设置自己对目标账号的备注 |
 | GET | `/api/v1/users/{id}/avatar` | 登录 | 读取头像 |
@@ -53,6 +53,7 @@
 | --- | --- | --- |
 | PUT | `/api/v1/blog/me` | 发布结构化 title/summary/blocks 图文博客 |
 | POST | `/api/v1/blog/me/custom` | 上传自定义 HTML 草稿并进入审核 |
+| GET | `/api/v1/blog/me/custom/reviews` | 查看自己的审核历史与备注，不返回 HTML |
 | GET | `/api/v1/blogs/{id}` | 登录账号观察公开博客清单 |
 | GET | `/api/v1/blogs/{id}/assets/{name}` | 登录账号读取结构化博客图片 |
 | GET | `/blogs/{id}/custom/{revision}` | CSP sandbox 自定义页面 |
@@ -77,7 +78,7 @@
 
 | 方法 | 路径 | 权限 | 说明 |
 | --- | --- | --- | --- |
-| GET | `/api/v1/proxy/status` | 登录 | 白名单状态、选择和节点延迟 |
+| GET | `/api/v1/proxy/status` | 管理员 | 白名单状态、选择和节点延迟 |
 | POST | `/api/v1/proxy/mode` | 管理员 | rule/global/direct |
 | POST | `/api/v1/proxy/selection` | 管理员 | AUTO 或允许节点 |
 | POST | `/api/v1/proxy/refresh` | 管理员 | 刷新 provider |

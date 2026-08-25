@@ -125,7 +125,13 @@ class BlogManager:
                 name = f"{uuid.uuid4().hex}.{extension}"
                 pending_assets.append((blog_dir / "assets" / name, content))
                 prepared.append({"type": "image", "alt": alt, "src": f"/api/v1/blogs/{account_id}/assets/{name}"})
-        projected = self.accounts.directory_size(blog_dir) + sum(len(content) for _path, content in pending_assets)
+        replaceable = sum(
+            path.stat().st_size
+            for directory in (blog_dir / "assets", blog_dir / "published")
+            for path in directory.iterdir()
+            if path.is_file()
+        )
+        projected = self.accounts.directory_size(blog_dir) - replaceable + sum(len(content) for _path, content in pending_assets)
         if projected > BLOG_QUOTA_BYTES:
             raise ValidationError("blog_quota_exceeded", "博客资源超过 32 MiB 配额。")
         for path, content in pending_assets:
@@ -141,6 +147,12 @@ class BlogManager:
             "updated_at": utc_now(),
         }
         self.accounts.write_blog_manifest(account_id, manifest)
+        keep_assets = {path.name for path, _content in pending_assets}
+        for path in (blog_dir / "assets").iterdir():
+            if path.is_file() and path.name not in keep_assets:
+                path.unlink()
+        for path in (blog_dir / "published").glob("*.html"):
+            path.unlink()
         return manifest
 
     def submit_custom(self, account_id: str, html: Any) -> dict[str, Any]:
@@ -165,9 +177,16 @@ class BlogManager:
             published = self.accounts.blog_dir(account_id) / "published" / f"{revision_id}.html"
             shutil.copyfile(draft, published)
             os.chmod(published, 0o600)
+            for previous in published.parent.glob("*.html"):
+                if previous != published:
+                    previous.unlink()
             manifest = self.accounts.blog_manifest(account_id)
             manifest.update({"mode": "custom", "published": True, "custom_revision": revision_id, "updated_at": utc_now()})
             self.accounts.write_blog_manifest(account_id, manifest)
+            for asset in (self.accounts.blog_dir(account_id) / "assets").iterdir():
+                if asset.is_file():
+                    asset.unlink()
+        draft.unlink(missing_ok=True)
         return record
 
     def public_blog(self, account_id: str) -> dict[str, Any]:

@@ -80,6 +80,7 @@ class ControlPlaneTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
+        self.ui_root = Path(__file__).resolve().parents[1] / "control_plane" / "ui"
         self.accounts = AccountStore(self.root / "data")
         self.admin = self.accounts.bootstrap_admin("admin", ADMIN_PASSWORD)
         self.alice = self.accounts.create_account("alice", USER_PASSWORD)
@@ -99,6 +100,7 @@ class ControlPlaneTests(unittest.TestCase):
             accounts=self.accounts,
             shared=self.shared,
             proxy_controller=self.proxy,
+            ui_root=self.ui_root,
         )
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -175,12 +177,41 @@ class ControlPlaneTests(unittest.TestCase):
     def test_root_replaces_clock_and_public_chat(self):
         status, body, headers = self.request("/")
         self.assertEqual(status, 200)
-        self.assertEqual(body["ui_bundled"], False)
-        self.assertNotIn("clock", json.dumps(body))
-        self.assertNotIn("chat", json.dumps(body))
-        self.assertIn("default-src 'none'", headers["Content-Security-Policy"])
+        html = body.decode("utf-8")
+        self.assertIn("进入你的服务器工作空间", html)
+        self.assertNotIn("clock", html.lower())
+        self.assertNotIn("公共聊天", html)
+        self.assertIn("default-src 'self'", headers["Content-Security-Policy"])
+        status, body, _ = self.request("/api/v1/meta")
+        self.assertEqual(status, 200)
+        self.assertTrue(body["ui_bundled"])
+        status, css, _ = self.request("/static/app.css")
+        self.assertEqual(status, 200)
+        self.assertIn(b"html{background:var(--bg);color:var(--text);font:14px", css)
+        status, javascript, _ = self.request("/static/app.js")
+        self.assertEqual(status, 200)
+        self.assertIn(b"renderPlanner", javascript)
         status, body, _ = self.request("/api/messages")
         self.assertEqual(status, 404)
+
+    def test_api_only_default_does_not_bundle_operator_ui(self):
+        api_only = create_server(
+            "127.0.0.1",
+            0,
+            accounts=self.accounts,
+            shared=self.shared,
+            proxy_controller=self.proxy,
+        )
+        thread = threading.Thread(target=api_only.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with urlopen(f"http://127.0.0.1:{api_only.server_address[1]}/", timeout=5) as response:
+                body = json.loads(response.read())
+            self.assertFalse(body["ui_bundled"])
+        finally:
+            api_only.shutdown()
+            api_only.server_close()
+            thread.join(timeout=2)
 
     def test_account_pool_is_sibling_isolated_and_passwords_are_hashed(self):
         account_directories = sorted(path.name for path in (self.root / "data" / "accounts").iterdir() if path.is_dir())
@@ -226,13 +257,22 @@ class ControlPlaneTests(unittest.TestCase):
         )
         self.assertEqual(status, 200, body)
         self.assertEqual(body["profile"]["nickname"], "Alice 的工作台")
-        status, _body, _ = self.request(
+        status, body, _ = self.request(
             "/api/v1/me/settings",
             method="PATCH",
             payload={"theme": "dark", "proxy": {"preferred_mode": "direct", "preferred_selection": "Fast node"}},
             token=self.alice_token,
         )
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"]["code"], "unknown_setting")
+        status, _body, _ = self.request(
+            "/api/v1/me/settings",
+            method="PATCH",
+            payload={"theme": "dark"},
+            token=self.alice_token,
+        )
         self.assertEqual(status, 200)
+        self.assertNotIn("proxy", self.accounts.settings(self.alice["id"]))
         status, body, _ = self.request(
             f"/api/v1/users/{self.bob['id']}/remark",
             method="PUT",
@@ -373,6 +413,14 @@ class ControlPlaneTests(unittest.TestCase):
         )
         self.assertEqual(status, 202, body)
         revision = body["review"]["revision_id"]
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.alice_token)
+        self.assertEqual(status, 200, body)
+        self.assertEqual(body["reviews"][0]["status"], "pending")
+        self.assertNotIn("reviewer_id", body["reviews"][0])
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.bob_token)
+        self.assertEqual(body["reviews"], [])
+        draft = self.accounts.blog_dir(self.alice["id"]) / "drafts" / f"{revision}.html"
+        self.assertTrue(draft.is_file())
         status, body, _ = self.request(
             f"/api/v1/admin/blog-reviews/{self.alice['id']}/{revision}",
             method="POST",
@@ -386,6 +434,29 @@ class ControlPlaneTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("自定义页面", page.decode("utf-8"))
         self.assertIn("sandbox", headers["Content-Security-Policy"])
+        self.assertFalse(draft.exists())
+        self.assertEqual(list((self.accounts.blog_dir(self.alice["id"]) / "assets").iterdir()), [])
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.alice_token)
+        self.assertEqual(body["reviews"][0]["status"], "approved")
+        self.assertEqual(body["reviews"][0]["note"], "无脚本与外链")
+
+        status, body, _ = self.request(
+            "/api/v1/blog/me/custom", method="POST", payload={"html": safe_html.replace("<title>A</title>", "<title>B</title>")}, token=self.alice_token
+        )
+        rejected_revision = body["review"]["revision_id"]
+        rejected_draft = self.accounts.blog_dir(self.alice["id"]) / "drafts" / f"{rejected_revision}.html"
+        status, body, _ = self.request(
+            f"/api/v1/admin/blog-reviews/{self.alice['id']}/{rejected_revision}",
+            method="POST",
+            payload={"decision": "rejected", "note": "需要调整排版"},
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 200, body)
+        self.assertFalse(rejected_draft.exists())
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.alice_token)
+        rejected = next(item for item in body["reviews"] if item["revision_id"] == rejected_revision)
+        self.assertEqual(rejected["status"], "rejected")
+        self.assertEqual(rejected["note"], "需要调整排版")
 
     def test_inference_dispatch_has_worker_lease_and_owner_isolation(self):
         status, body, _ = self.request(
@@ -437,6 +508,9 @@ class ControlPlaneTests(unittest.TestCase):
 
     def test_proxy_is_integrated_and_mutation_is_admin_only(self):
         status, body, _ = self.request("/api/v1/proxy/status", token=self.alice_token)
+        self.assertEqual(status, 403)
+        status, body, _ = self.request("/api/v1/proxy/status", token=self.admin_token)
+        self.assertEqual(status, 200)
         self.assertEqual(body["proxy"]["mode"], "rule")
         status, _body, _ = self.request(
             "/api/v1/proxy/mode", method="POST", payload={"mode": "direct"}, token=self.alice_token
@@ -456,7 +530,7 @@ class ControlPlaneTests(unittest.TestCase):
             raise RuntimeError("internal detail must not leak")
 
         self.proxy.status = broken_status
-        status, body, _ = self.request("/api/v1/proxy/status", token=self.alice_token)
+        status, body, _ = self.request("/api/v1/proxy/status", token=self.admin_token)
         self.assertEqual(status, 500, body)
         self.assertEqual(body["error"]["code"], "internal_error")
         self.assertNotIn("internal detail", json.dumps(body))
@@ -473,7 +547,13 @@ class ControlPlaneTests(unittest.TestCase):
         )
         self.assertEqual(status, 403)
         self.assertEqual(body["error"]["code"], "origin_not_allowed")
-        login = self.login("alice", USER_PASSWORD)
+        status, login, login_headers = self.request(
+            "/api/v1/auth/login", method="POST", payload={"username": "alice", "password": USER_PASSWORD}
+        )
+        self.assertEqual(status, 200, login)
+        cookies = login_headers.get_all("Set-Cookie")
+        self.assertTrue(any(item.startswith("cp_session=") and "HttpOnly" in item for item in cookies))
+        self.assertTrue(any(item.startswith("cp_csrf=") and "HttpOnly" not in item for item in cookies))
         status, body, _ = self.request(
             "/api/v1/me/settings",
             method="PATCH",

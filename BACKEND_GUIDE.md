@@ -1,6 +1,6 @@
 # 后端位置与接入指引
 
-这份文件是仓库根目录的具体位置索引。正式交互和视觉层由后续前端 AI 实现；不要把本次本地 QA 界面复制进产品提交。
+这份文件是仓库根目录的具体位置索引。正式交互和视觉层仍由后续前端 AI 实现；`control_plane/ui/` 是本轮验收后允许临时上线的基础模板，不代表最终设计。
 
 ## 代码位置
 
@@ -10,10 +10,13 @@
 | `control_plane/storage.py` | 同级账号目录、scrypt 身份哈希、资料、设置、备注、会话、设备、日历和博客文件 |
 | `control_plane/shared.py` | 连接申请、受限消息、推理任务、监控端租约和博客审核的 SQLite 事务 |
 | `control_plane/planner.py` | IrohaWalendar v5 快照、数量/大小限制和本机敏感设置过滤 |
+| `tools/holiday-planner-sync.ps1` | Windows 桌面同步适配器；轮询 IrohaWalendar 本机 API，并用一次性设备令牌对应的摘要凭据上传只读快照 |
 | `control_plane/proxy.py` | Mihomo Unix socket 白名单适配；不返回服务器、端口、密码或订阅信息 |
 | `control_plane/blog.py` | 结构化图文博客、32 MiB 配额、自定义 HTML 校验和管理员审核发布 |
 | `control_plane/security.py` | 密码、随机令牌、图像、JSON 深度和通用输入约束 |
 | `control_plane/cli.py` | 空账号池的唯一初始管理员安全引导 |
+| `control_plane/ui/` | 已验收、可随 main 部署的基础界面模板；后续可按前端交接契约整体替换 |
+| `--ui-root <dir>` | 可选加载界面目录；默认仍保持纯 API，后端只读取 `index.html`、`app.css`、`app.js` |
 | `tests/test_control_plane.py` | 认证、隔离、同步、通讯、容量、博客、代理、CSRF 和推理队列验收 |
 
 ## 数据目录
@@ -27,7 +30,7 @@ data/
 │  ├─ <account-id>/                  # 每个账号目录彼此并列，0700
 │  │  ├─ identity.json               # 账号名、角色、状态、scrypt 盐和哈希
 │  │  ├─ profile.json                # 昵称、头像引用
-│  │  ├─ settings.json               # 该账号自己的界面/代理偏好
+│  │  ├─ settings.json               # 该账号自己的主题和语言偏好；不保存全局代理项
 │  │  ├─ social.json                 # 该账号对其他人的私人备注
 │  │  ├─ sessions.json               # 有时限且只存摘要的登录会话
 │  │  ├─ devices.json                # 可撤销且只存摘要的桌面同步令牌
@@ -60,10 +63,17 @@ python3 -m control_plane.cli --data-root /safe/private/data init-admin --usernam
 ```sh
 python3 tools/workspace_runtime.py run \
   --session <active-session> control-plane -- \
-  python3 -m control_plane.server --host {host} --port {port} --data-root "$APP_DATA_DIR"
+  python3 -m control_plane.server --host {host} --port {port} \
+    --data-root "$APP_DATA_DIR" --ui-root control_plane/ui
 ```
 
+基础模板随源码位于 `control_plane/ui/`；设计源、截图与浏览器 QA 产物仍留在忽略目录，不得加入 Git。未传 `--ui-root` 时仍是纯 API 服务。工作区可通过 `127.0.0.1:18761` 预览，本机访问命令为 `ssh -N -L 18761:127.0.0.1:18761 aliyun-server`。
+
 生产 HTTPS 部署应增加 `--secure-cookie`。不允许让 systemd 从 agent-1 或 agent-2 工作区运行，也不允许继续使用旧的公网明文 TCP 8765 登录。
+
+## 全局代理
+
+代理模式、GitHub 节点、订阅刷新和状态读取都只允许管理员访问。代理不是账号设置，`settings.json` 不保存代理偏好。管理员开启后，所有服务器用户都可以共享 `127.0.0.1:7890`，但具体程序仍必须显式设置 HTTP/SOCKS 代理；系统不会自动接管所有进程。
 
 ## IrohaWalendar 只读同步
 
@@ -71,7 +81,7 @@ python3 tools/workspace_runtime.py run \
 
 快照沿用 v5 的 `goals`、`actions`、`routineCategories`、`routines`、`plans` 和 `completionRecords`，同时加入严格递增的 `revision` 与 `source_updated_at`。服务端只保留跨设备有意义的日历设置；`apiToken`、`apiPort`、本机 API 开关、快捷键、当前焦点日期和侧栏宽度不会同步。每个账号独立保存 12 MiB 以内的最新快照。
 
-桌面应用后续需要增加一个适配器：状态原子保存成功后，递增 revision 并向这个端点上传；失败写入本地 outbox 重试，不能阻塞本地保存。设备令牌可在网页列出和撤销。
+桌面适配器已经位于 `tools/holiday-planner-sync.ps1`。它调用 IrohaWalendar 3.5 的 loopback 自动化 API，首次启动立即上传，此后默认每 5 秒比较一次过滤后快照，只在内容变化时上传；网络或服务器暂时失败会继续重试，不会阻塞桌面应用保存。revision 由 UTC 毫秒与进程内单调计数生成。`apiToken`、`apiPort`、本机 API 开关、快捷键、焦点日期和侧栏宽度在电脑端即被剔除，不会发送给服务器。两个令牌默认都用无回显提示读取且不落盘；设备令牌可在网页列出和撤销。完整操作见 `docs/holiday-planner-sync.md`。
 
 ## 通讯与容量决定
 
@@ -94,6 +104,8 @@ python3 tools/workspace_runtime.py run \
 
 自定义网页先保存为草稿并进入管理员审核。即使审核通过也禁止脚本、iframe、表单、外链、事件属性、CSS 外部 URL 和可执行表达式；发布页使用独立 CSP sandbox、禁止网络连接和表单提交。未来如果必须允许 JavaScript，必须改为不同站点/不同 cookie 域、隔离对象存储、恶意内容扫描和人工审核，不能放宽当前同源沙箱。
 
+账号可通过 `/api/v1/blog/me/custom/reviews` 查看自己的待审、批准、拒绝状态与审核备注，但不能读取审核者身份或服务器草稿路径。审核结束后删除对应草稿；新结构化发布会回收旧图片和旧自定义发布页，新自定义版本获批后只保留当前发布页，避免替换发布长期吞噬账号配额。
+
 ## 推理任务端
 
 网页创建任务时提交指令、优先级和参数白名单。服务器不执行推理。管理员为电脑监控程序创建 Worker token；监控程序领取一个任务后获得短期租约，通过进度接口续租并通过完成接口回传 JSON 结果。租约过期的任务重新排队，错误 worker 或旧租约不能写入。
@@ -107,4 +119,4 @@ python3 -m compileall -q control_plane tests
 python3 -m unittest discover -s tests -v
 ```
 
-不得把真实账号数据、设备令牌、Worker token、博客草稿、推理输出或本地 QA UI 提交到 Git。
+不得把真实账号数据、设备令牌、Worker token、博客草稿、推理输出、设计源、截图或浏览器 QA 产物提交到 Git。

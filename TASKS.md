@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| Interactive account-platform UI and temporary single-area deployment | Agent 1 | `agent-1` | Real login and API-backed personal settings, planner/sync, contacts/messages, blogs/review, inference, admin accounts and admin-only global proxy; readable non-tiny typography; responsive/keyboard/browser QA; reviewed main-derived loopback deployment reachable only through SSH tunnel; workspace test port returned afterward | User accepted the current UI despite known polish defects as a temporary base template; 25 tests pass after its byte-identical promotion to `control_plane/ui`, with the earlier 9-route/6-capture browser run and real Windows adapter/tester-account sync still valid; product PR #26 is ready for merge, followed by a dedicated environment deployment PR |
 
 ## Completed
 

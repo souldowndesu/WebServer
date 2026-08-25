@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serve the authenticated management API. The visual UI is intentionally not bundled."""
+"""Serve the authenticated management API and an optional reviewed UI directory."""
 
 from __future__ import annotations
 
@@ -28,6 +28,7 @@ from .storage import AccountStore
 MAX_BODY_BYTES = 13 * 1024 * 1024
 MAX_INFERENCE_RESULT_BYTES = 2 * 1024 * 1024
 SESSION_COOKIE = "cp_session"
+CSRF_COOKIE = "cp_csrf"
 SESSION_MAX_AGE = 12 * 60 * 60
 LOGIN_WINDOW_SECONDS = 300
 LOGIN_MAX_FAILURES = 5
@@ -48,6 +49,7 @@ class ManagementServer(ThreadingHTTPServer):
         proxy_controller: Any,
         *,
         secure_cookie: bool = False,
+        ui_root: str | Path | None = None,
     ) -> None:
         super().__init__(address, ManagementRequestHandler)
         self.accounts = accounts
@@ -55,6 +57,7 @@ class ManagementServer(ThreadingHTTPServer):
         self.blogs = BlogManager(accounts, shared)
         self.proxy_controller = proxy_controller
         self.secure_cookie = secure_cookie
+        self.ui_root = Path(ui_root).resolve() if ui_root else None
         self.login_failures: dict[str, list[float]] = {}
         self.login_lock = threading.Lock()
 
@@ -93,15 +96,16 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/") or "/"
         try:
             if method == "GET" and path == "/":
-                self._send_json(
-                    HTTPStatus.OK,
-                    {
-                        "service": "authenticated-management-api",
-                        "api_version": "v1",
-                        "ui_bundled": False,
-                        "documentation": "BACKEND_GUIDE.md",
-                    },
-                )
+                if self.server.ui_root is None:
+                    self._send_json(HTTPStatus.OK, self._meta_payload())
+                else:
+                    self._serve_ui_file("index.html", "text/html; charset=utf-8")
+                return
+            if method == "GET" and path == "/static/app.css":
+                self._serve_ui_file("app.css", "text/css; charset=utf-8")
+                return
+            if method == "GET" and path == "/static/app.js":
+                self._serve_ui_file("app.js", "text/javascript; charset=utf-8")
                 return
             if method == "GET" and path == "/favicon.ico":
                 self._send_empty(HTTPStatus.NO_CONTENT)
@@ -114,6 +118,12 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
                         "initialized": bool(self.server.accounts.list_accounts()),
                         "message_usage": self.server.shared.message_usage(),
                     },
+                )
+                return
+            if method == "GET" and path == "/api/v1/meta":
+                self._send_json(
+                    HTTPStatus.OK,
+                    self._meta_payload(),
                 )
                 return
             if method == "POST" and path == "/api/v1/auth/login":
@@ -251,6 +261,10 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
                 review = self.server.blogs.submit_custom(user["id"], self._read_json().get("html"))
                 self._send_json(HTTPStatus.ACCEPTED, {"review": review})
                 return
+            if method == "GET" and path == "/api/v1/blog/me/custom/reviews":
+                user, _token = self._require_user()
+                self._send_json(HTTPStatus.OK, {"reviews": self.server.shared.blog_reviews_for_account(user["id"])})
+                return
             if method == "GET" and path == "/api/v1/admin/blog-reviews":
                 self._require_admin()
                 self._send_json(HTTPStatus.OK, {"reviews": self.server.shared.pending_blog_reviews()})
@@ -338,7 +352,7 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
                 return
 
             if method == "GET" and path == "/api/v1/proxy/status":
-                self._require_user()
+                self._require_admin()
                 self._send_json(HTTPStatus.OK, {"proxy": self.server.proxy_controller.status()})
                 return
             if method == "POST" and path in {"/api/v1/proxy/mode", "/api/v1/proxy/selection", "/api/v1/proxy/refresh"}:
@@ -455,7 +469,12 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         with self.server.login_lock:
             self.server.login_failures.pop(key, None)
         session = self.server.accounts.create_session(user["id"])
-        self._send_json(HTTPStatus.OK, {"account": user, "session": session}, session_cookie=session["token"])
+        self._send_json(
+            HTTPStatus.OK,
+            {"account": user, "session": session},
+            session_cookie=session["token"],
+            csrf_cookie=session["csrf_token"],
+        )
 
     def _list_users(self, viewer: dict[str, Any]) -> None:
         remarks = self.server.accounts.remarks(viewer["id"])
@@ -566,6 +585,43 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
+    def _serve_ui_file(self, name: str, content_type: str) -> None:
+        if name not in {"index.html", "app.css", "app.js"}:
+            self._send_json(HTTPStatus.NOT_FOUND, {"error": {"code": "not_found", "message": "资源不存在。"}})
+            return
+        if self.server.ui_root is None:
+            self._send_json(HTTPStatus.NOT_FOUND, {"error": {"code": "ui_unavailable", "message": "未配置测试界面。"}})
+            return
+        path = self.server.ui_root / name
+        if not path.is_file():
+            self._send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": {"code": "ui_unavailable", "message": "测试界面尚未安装。"}})
+            return
+        content = path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+            "connect-src 'self'; font-src 'none'; object-src 'none'; frame-ancestors 'none'; "
+            "base-uri 'none'; form-action 'self'",
+        )
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("Cache-Control", "no-store" if name == "index.html" else "private, max-age=300")
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _meta_payload(self) -> dict[str, Any]:
+        return {
+            "service": "authenticated-management-api",
+            "api_version": "v1",
+            "ui_bundled": self.server.ui_root is not None,
+            "documentation": "BACKEND_GUIDE.md",
+        }
+
     def _security_headers(self) -> None:
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
@@ -579,6 +635,7 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         payload: dict[str, Any],
         *,
         session_cookie: str | None = None,
+        csrf_cookie: str | None = None,
         clear_cookie: bool = False,
     ) -> None:
         body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
@@ -590,9 +647,12 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         if session_cookie is not None:
             secure = "; Secure" if self.server.secure_cookie else ""
             self.send_header("Set-Cookie", f"{SESSION_COOKIE}={session_cookie}; Path=/; HttpOnly; SameSite=Strict; Max-Age={SESSION_MAX_AGE}{secure}")
+            if csrf_cookie is not None:
+                self.send_header("Set-Cookie", f"{CSRF_COOKIE}={csrf_cookie}; Path=/; SameSite=Strict; Max-Age={SESSION_MAX_AGE}{secure}")
         elif clear_cookie:
             secure = "; Secure" if self.server.secure_cookie else ""
             self.send_header("Set-Cookie", f"{SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0{secure}")
+            self.send_header("Set-Cookie", f"{CSRF_COOKIE}=; Path=/; SameSite=Strict; Max-Age=0{secure}")
         self.end_headers()
         self.wfile.write(body)
 
@@ -612,6 +672,7 @@ def create_server(
     shared: SharedStore | None = None,
     proxy_controller: Any | None = None,
     secure_cookie: bool = False,
+    ui_root: str | Path | None = None,
 ) -> ManagementServer:
     if accounts is None:
         root = Path(data_root or os.environ.get("APP_DATA_DIR", ".runtime/data"))
@@ -620,7 +681,7 @@ def create_server(
         shared = SharedStore(accounts.shared_root / "platform.sqlite3")
     if proxy_controller is None:
         proxy_controller = MihomoClient(os.environ.get("MIHOMO_SOCKET", "/run/mihomo/controller.sock"))
-    return ManagementServer((host, port), accounts, shared, proxy_controller, secure_cookie=secure_cookie)
+    return ManagementServer((host, port), accounts, shared, proxy_controller, secure_cookie=secure_cookie, ui_root=ui_root)
 
 
 def main() -> None:
@@ -630,6 +691,7 @@ def main() -> None:
     parser.add_argument("--data-root", default=os.environ.get("APP_DATA_DIR", ".runtime/data"))
     parser.add_argument("--mihomo-socket", default=os.environ.get("MIHOMO_SOCKET", "/run/mihomo/controller.sock"))
     parser.add_argument("--secure-cookie", action="store_true")
+    parser.add_argument("--ui-root", default=os.environ.get("CONTROL_PLANE_UI_ROOT"), help="可选界面目录；可使用 control_plane/ui 基础模板，不配置时根路径只返回 API 元数据")
     args = parser.parse_args()
     server = create_server(
         args.host,
@@ -637,6 +699,7 @@ def main() -> None:
         data_root=args.data_root,
         proxy_controller=MihomoClient(args.mihomo_socket),
         secure_cookie=args.secure_cookie,
+        ui_root=args.ui_root,
     )
     stopping = threading.Event()
 
