@@ -7,10 +7,10 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 - State: active
 - Current task: interactive account-platform UI and temporary loopback deployment
 - Branch: `agent-1`
-- Last verification: 25 automated tests pass; dependency-free browser QA completed real operations across all 9 routes at 1440×920 and 390×844 with no unexpected response, console, overflow, or sub-14px bold-text failures; final UI is loaded only from `.runtime/operator-ui`; proxy remains healthy and admin-only
+- Last verification: 25 automated tests pass; full browser QA completed real operations across all 9 routes and produced 6 desktop/mobile captures with no unexpected response, console, overflow, or sub-14px bold-text failures; day/week/month/stat planner views read a real IrohaWalendar v5 snapshot; self-visible blog review status and reviewed-draft/obsolete-asset cleanup pass; legacy services remain inactive and only the registered `127.0.0.1:18761` preview listens
 - Pull requests: #21–#24 are merged; draft product PR #26 contains the backend, tests, and handoff documentation while the test UI remains outside Git
-- Last handoff: previously placeholder screens now call real APIs; account selection and stale-render races discovered by browser QA are fixed in the runtime test UI; agent-1 preview is reachable only through the SSH tunnel on `127.0.0.1:18761`
-- Next action: operator tests the temporary preview and reports interaction/visual feedback; then finalize PR #26, merge the backend unit, clean the temporary QA data, and release the workspace lease
+- Last handoff: previously placeholder screens now call real APIs; planner coverage and per-account custom-blog audit history are complete; agent-1 preview is reachable only through the SSH tunnel on `127.0.0.1:18761`, with test UI outside Git
+- Next action: operator initializes the clean preview admin, tests through the SSH tunnel, and reports interaction/visual feedback; then finalize PR #26, clean temporary QA data, stop the preview, and release the workspace lease/registered port
 
 ## Agent 2
 

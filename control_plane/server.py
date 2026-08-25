@@ -261,6 +261,10 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
                 review = self.server.blogs.submit_custom(user["id"], self._read_json().get("html"))
                 self._send_json(HTTPStatus.ACCEPTED, {"review": review})
                 return
+            if method == "GET" and path == "/api/v1/blog/me/custom/reviews":
+                user, _token = self._require_user()
+                self._send_json(HTTPStatus.OK, {"reviews": self.server.shared.blog_reviews_for_account(user["id"])})
+                return
             if method == "GET" and path == "/api/v1/admin/blog-reviews":
                 self._require_admin()
                 self._send_json(HTTPStatus.OK, {"reviews": self.server.shared.pending_blog_reviews()})

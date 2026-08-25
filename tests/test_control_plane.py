@@ -417,6 +417,14 @@ class ControlPlaneTests(unittest.TestCase):
         )
         self.assertEqual(status, 202, body)
         revision = body["review"]["revision_id"]
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.alice_token)
+        self.assertEqual(status, 200, body)
+        self.assertEqual(body["reviews"][0]["status"], "pending")
+        self.assertNotIn("reviewer_id", body["reviews"][0])
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.bob_token)
+        self.assertEqual(body["reviews"], [])
+        draft = self.accounts.blog_dir(self.alice["id"]) / "drafts" / f"{revision}.html"
+        self.assertTrue(draft.is_file())
         status, body, _ = self.request(
             f"/api/v1/admin/blog-reviews/{self.alice['id']}/{revision}",
             method="POST",
@@ -430,6 +438,29 @@ class ControlPlaneTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("自定义页面", page.decode("utf-8"))
         self.assertIn("sandbox", headers["Content-Security-Policy"])
+        self.assertFalse(draft.exists())
+        self.assertEqual(list((self.accounts.blog_dir(self.alice["id"]) / "assets").iterdir()), [])
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.alice_token)
+        self.assertEqual(body["reviews"][0]["status"], "approved")
+        self.assertEqual(body["reviews"][0]["note"], "无脚本与外链")
+
+        status, body, _ = self.request(
+            "/api/v1/blog/me/custom", method="POST", payload={"html": safe_html.replace("<title>A</title>", "<title>B</title>")}, token=self.alice_token
+        )
+        rejected_revision = body["review"]["revision_id"]
+        rejected_draft = self.accounts.blog_dir(self.alice["id"]) / "drafts" / f"{rejected_revision}.html"
+        status, body, _ = self.request(
+            f"/api/v1/admin/blog-reviews/{self.alice['id']}/{rejected_revision}",
+            method="POST",
+            payload={"decision": "rejected", "note": "需要调整排版"},
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 200, body)
+        self.assertFalse(rejected_draft.exists())
+        status, body, _ = self.request("/api/v1/blog/me/custom/reviews", token=self.alice_token)
+        rejected = next(item for item in body["reviews"] if item["revision_id"] == rejected_revision)
+        self.assertEqual(rejected["status"], "rejected")
+        self.assertEqual(rejected["note"], "需要调整排版")
 
     def test_inference_dispatch_has_worker_lease_and_owner_isolation(self):
         status, body, _ = self.request(

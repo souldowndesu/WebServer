@@ -53,6 +53,7 @@
 | --- | --- | --- |
 | PUT | `/api/v1/blog/me` | 发布结构化 title/summary/blocks 图文博客 |
 | POST | `/api/v1/blog/me/custom` | 上传自定义 HTML 草稿并进入审核 |
+| GET | `/api/v1/blog/me/custom/reviews` | 查看自己的审核历史与备注，不返回 HTML |
 | GET | `/api/v1/blogs/{id}` | 登录账号观察公开博客清单 |
 | GET | `/api/v1/blogs/{id}/assets/{name}` | 登录账号读取结构化博客图片 |
 | GET | `/blogs/{id}/custom/{revision}` | CSP sandbox 自定义页面 |
