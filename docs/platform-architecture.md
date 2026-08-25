@@ -14,7 +14,7 @@
 - 管理员不能读取任意私人会话，也不能读取密码或令牌原文。
 - Device token 只有 `planner_sync` 权限；Worker token 只有领取和回报任务权限。
 
-浏览器会话使用 HttpOnly SameSite=Strict cookie；cookie 修改请求另需 CSRF token。API 测试或受控客户端可使用 Bearer session。所有带 Origin 的修改请求必须与 Host 同源。登录失败按账号名与来源地址做滑动窗口限速。
+浏览器会话使用 HttpOnly SameSite=Strict cookie；公网 HTTPS 模式另加 Secure 和 HSTS。cookie 修改请求另需 CSRF token。API 测试或受控客户端可使用 Bearer session。所有带 Origin 的修改请求必须与 Host 同源。登录失败按账号名与来源地址做滑动窗口限速；只有连接本身来自 loopback 时，后端才可信任由本机反向代理覆盖写入的 `X-Real-IP`。
 
 ## 一致性与隔离
 
@@ -47,4 +47,4 @@ queued → running → succeeded
 
 ## 部署闸门
 
-合并产品 PR 不等于正式部署。旧 connectivity-chat、独立 proxy-control、UFW 8765 和内存聊天数据已通过环境 PR #22/#23 退役。新平台部署前仍必须单独记录环境变更，至少包含：建立低权限服务账号与私有数据目录；从审核后的 main commit 安装只读代码；配置 TLS 反向代理与 Secure Cookie；通过无回显流程初始化唯一管理员；验证备份、恢复、权限、端口以及 Mihomo 和 SSH 不受影响。
+合并产品 PR 不等于正式部署。旧 connectivity-chat、独立 proxy-control、UFW 8765 和内存聊天数据已通过环境 PR #22/#23 退役。新平台部署前仍必须单独记录环境变更，至少包含：建立低权限服务账号与私有数据目录；从审核后的 main commit 安装只读代码；配置公网 IP 证书、TLS 反向代理、自动续期、Secure Cookie 与仅本机代理信任；通过无回显流程初始化唯一管理员；验证备份、恢复、权限、证书续期、端口以及 Mihomo 和 SSH 不受影响。公网只开放 80/443，应用端口保持 loopback。

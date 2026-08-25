@@ -69,7 +69,7 @@ python3 tools/workspace_runtime.py run \
 
 基础模板随源码位于 `control_plane/ui/`；设计源、截图与浏览器 QA 产物仍留在忽略目录，不得加入 Git。未传 `--ui-root` 时仍是纯 API 服务。工作区可通过 `127.0.0.1:18761` 预览，本机访问命令为 `ssh -N -L 18761:127.0.0.1:18761 aliyun-server`。
 
-生产 HTTPS 部署应增加 `--secure-cookie`。不允许让 systemd 从 agent-1 或 agent-2 工作区运行，也不允许继续使用旧的公网明文 TCP 8765 登录。
+生产 HTTPS 部署应同时增加 `--secure-cookie --trust-loopback-proxy`。后一个开关只在 TCP 对端为 loopback 时读取反向代理写入的 `X-Real-IP`，用于按真实来源执行登录限速；反向代理必须覆盖而不是透传客户端提供的该请求头。HTTPS 模式会为登录 Cookie 增加 `Secure`，并返回一年期 HSTS。应用仍必须只监听 `127.0.0.1`。不允许让 systemd 从 agent-1 或 agent-2 工作区运行，也不允许继续使用旧的公网明文 TCP 8765 登录。
 
 ## 全局代理
 
