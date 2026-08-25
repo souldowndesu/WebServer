@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| Public HTTPS access for accepted account-platform template | Agent 1 | `agent-1` | Public browser URL uses trusted HTTPS; origin remains loopback-only; Secure/HttpOnly/SameSite cookies, HSTS, same-origin CSRF and real-client login throttling work behind the tunnel; no new inbound UFW rule; exact external binary hash and environment rollback recorded; existing accounts/data preserved | Claimed; server has no domain/certificate/80/443 proxy, so a testing-only random Cloudflare Quick Tunnel is selected pending product hardening and a dedicated environment-change PR |
 
 ## Completed
 
