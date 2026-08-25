@@ -2,7 +2,7 @@
 
 本仓库的产品入口是 `control_plane`：一个默认不捆绑正式前端的多账号管理 API。原来的浏览器时钟、匿名聊天室、终端聊天客户端和独立代理页面已经从产品源码移除；代理能力已整合为仅管理员可见的服务器全局模块。
 
-从 [BACKEND_GUIDE.md](BACKEND_GUIDE.md) 开始。它给出代码位置、初始管理员、数据目录、运行测试、桌面同步和监控端接入的具体路径。系统设计见 [docs/platform-architecture.md](docs/platform-architecture.md)，HTTP 契约见 [docs/api-v1.md](docs/api-v1.md)，前端 AI 的实现说明见 [docs/frontend-handoff.md](docs/frontend-handoff.md)。
+从 [BACKEND_GUIDE.md](BACKEND_GUIDE.md) 开始。它给出代码位置、初始管理员、数据目录、运行测试、桌面同步和监控端接入的具体路径。IrohaWalendar 实际同步步骤见 [docs/holiday-planner-sync.md](docs/holiday-planner-sync.md)，可运行脚本位于 [tools/holiday-planner-sync.ps1](tools/holiday-planner-sync.ps1)。系统设计见 [docs/platform-architecture.md](docs/platform-architecture.md)，HTTP 契约见 [docs/api-v1.md](docs/api-v1.md)，前端 AI 的实现说明见 [docs/frontend-handoff.md](docs/frontend-handoff.md)。
 
 ## 当前边界
 

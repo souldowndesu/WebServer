@@ -10,6 +10,7 @@
 | `control_plane/storage.py` | 同级账号目录、scrypt 身份哈希、资料、设置、备注、会话、设备、日历和博客文件 |
 | `control_plane/shared.py` | 连接申请、受限消息、推理任务、监控端租约和博客审核的 SQLite 事务 |
 | `control_plane/planner.py` | IrohaWalendar v5 快照、数量/大小限制和本机敏感设置过滤 |
+| `tools/holiday-planner-sync.ps1` | Windows 桌面同步适配器；轮询 IrohaWalendar 本机 API，并用一次性设备令牌对应的摘要凭据上传只读快照 |
 | `control_plane/proxy.py` | Mihomo Unix socket 白名单适配；不返回服务器、端口、密码或订阅信息 |
 | `control_plane/blog.py` | 结构化图文博客、32 MiB 配额、自定义 HTML 校验和管理员审核发布 |
 | `control_plane/security.py` | 密码、随机令牌、图像、JSON 深度和通用输入约束 |
@@ -79,7 +80,7 @@ python3 tools/workspace_runtime.py run \
 
 快照沿用 v5 的 `goals`、`actions`、`routineCategories`、`routines`、`plans` 和 `completionRecords`，同时加入严格递增的 `revision` 与 `source_updated_at`。服务端只保留跨设备有意义的日历设置；`apiToken`、`apiPort`、本机 API 开关、快捷键、当前焦点日期和侧栏宽度不会同步。每个账号独立保存 12 MiB 以内的最新快照。
 
-桌面应用后续需要增加一个适配器：状态原子保存成功后，递增 revision 并向这个端点上传；失败写入本地 outbox 重试，不能阻塞本地保存。设备令牌可在网页列出和撤销。
+桌面适配器已经位于 `tools/holiday-planner-sync.ps1`。它调用 IrohaWalendar 3.5 的 loopback 自动化 API，首次启动立即上传，此后默认每 5 秒比较一次过滤后快照，只在内容变化时上传；网络或服务器暂时失败会继续重试，不会阻塞桌面应用保存。revision 由 UTC 毫秒与进程内单调计数生成。`apiToken`、`apiPort`、本机 API 开关、快捷键、焦点日期和侧栏宽度在电脑端即被剔除，不会发送给服务器。两个令牌默认都用无回显提示读取且不落盘；设备令牌可在网页列出和撤销。完整操作见 `docs/holiday-planner-sync.md`。
 
 ## 通讯与容量决定
 
