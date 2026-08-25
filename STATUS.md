@@ -7,10 +7,10 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 - State: ready
 - Current task: none
 - Branch: `agent-1`
-- Last verification: 13 automated tests pass; proxy-control.service is enabled/active as a low-privilege user on 127.0.0.1:8790; allowlisted API returned 40 nodes in `rule + AUTO`; invalid Host/cross-origin changes were rejected; public TCP 8790 was unreachable; desktop/tablet/mobile SSH-tunnel browser checks had zero errors, failed requests, or horizontal overflow; Mihomo, chat, and GitHub proxy checks remained healthy
-- Pull requests: #5 — clock/chat/API; #6 and #7 — public chat service; #8 — local-only Mihomo GitHub proxy; #10 — proxy control page; #11 — loopback-only control service; all merged
-- Last handoff: proxy control product merged at `a790710`; loopback-only service record merged at `26408ed`; current control state restored to `rule + AUTO`
-- Next action: establish an SSH tunnel with `ssh -N -L 8790:127.0.0.1:8790 aliyun-server`, then browse to `http://127.0.0.1:8790`
+- Last verification: 26 automated tests pass. Public `https://39.105.132.249/` presents a trusted Let’s Encrypt IP certificate and passes TLS 1.2/1.3, HTTP redirect, UI/health, HSTS/CSP/nosniff, same-/cross-origin, foreign-Host rejection and public-8790 isolation checks. Simulated renewal plus deploy hook succeeds; Nginx, account-control, Mihomo and the renewal timer are enabled/active; UFW is SSH+80+443; the origin remains `127.0.0.1:8790`; both account directories and the exact 267845-byte private data tree are unchanged.
+- Pull requests: platform #21–#24, accepted UI #26, deployment registry #27, loopback deployment #28/#29, HTTPS hardening #31, environment plan #32, dependency amendment #33, and ACME correction #34 are merged; applied verification is #35.
+- Last handoff: the accepted base template is publicly reachable at `https://39.105.132.249/` with fixed-IP HTTPS and automatic short-lived certificate renewal. Credentialed browser testing is intentionally manual so the tester password never appears in commands or logs.
+- Next action: operator tests normal login and interactions through the public URL; future work may refine the known UI/interaction defects without changing this deployment boundary.
 
 ## Agent 2
 
