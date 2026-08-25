@@ -168,7 +168,6 @@ class AccountStore:
                 {
                     "theme": "system",
                     "locale": "zh-CN",
-                    "proxy": {"preferred_mode": "rule", "preferred_selection": "AUTO"},
                     "updated_at": now,
                 },
             )
@@ -327,10 +326,14 @@ class AccountStore:
 
     def settings(self, account_id: str) -> dict[str, Any]:
         value = _read_json(self.account_dir(account_id) / "settings.json", {})
-        return value if isinstance(value, dict) else {}
+        if not isinstance(value, dict):
+            return {}
+        result = dict(value)
+        result.pop("proxy", None)
+        return result
 
     def update_settings(self, account_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-        allowed = {"theme", "locale", "proxy"}
+        allowed = {"theme", "locale"}
         if set(payload) - allowed:
             raise ValidationError("unknown_setting", "设置中包含不支持的字段。")
         with self._lock:
@@ -344,15 +347,6 @@ class AccountStore:
                 if locale not in {"zh-CN", "en-US"}:
                     raise ValidationError("invalid_locale", "语言设置无效。")
                 value["locale"] = locale
-            if "proxy" in payload:
-                proxy = payload["proxy"]
-                if not isinstance(proxy, dict):
-                    raise ValidationError("invalid_proxy_settings", "代理偏好必须是对象。")
-                preferred_mode = proxy.get("preferred_mode", value.get("proxy", {}).get("preferred_mode", "rule"))
-                selection = str(proxy.get("preferred_selection", value.get("proxy", {}).get("preferred_selection", "AUTO")))
-                if preferred_mode not in {"rule", "global", "direct"} or not selection or len(selection) > 160:
-                    raise ValidationError("invalid_proxy_settings", "代理偏好无效。")
-                value["proxy"] = {"preferred_mode": preferred_mode, "preferred_selection": selection}
             value["updated_at"] = utc_now()
             _atomic_write_json(self.account_dir(account_id) / "settings.json", value)
             return value

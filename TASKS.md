@@ -11,7 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
-| Interactive account-platform UI and temporary test deployment | Agent 1 | `agent-1` | Real login and API-backed personal settings, planner/sync, contacts/messages, blogs/review, inference, admin accounts and admin-only global proxy; readable non-tiny typography; responsive/keyboard/browser QA; reviewed main-derived loopback service reachable only through SSH tunnel | Claimed; frontend and API contract inspection in progress |
+| Interactive account-platform UI and temporary test deployment | Agent 1 | `agent-1` | Real login and API-backed personal settings, planner/sync, contacts/messages, blogs/review, inference, admin accounts and admin-only global proxy; readable non-tiny typography; responsive/keyboard/browser QA; isolated loopback preview reachable only through SSH tunnel | Draft PR #26 ready for operator test; 25 tests and real 9-route browser flow pass; test UI is active from `.runtime` and is not tracked by Git |
 
 ## Completed
 

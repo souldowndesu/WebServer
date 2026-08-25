@@ -1,6 +1,6 @@
 # 后端位置与接入指引
 
-这份文件是仓库根目录的具体位置索引。正式交互和视觉层由后续前端 AI 实现；不要把本次本地 QA 界面复制进产品提交。
+这份文件是仓库根目录的具体位置索引。正式交互和视觉层由后续前端 AI 实现；本次可交互 QA 界面只放在操作者运行时目录，不进入产品提交。
 
 ## 代码位置
 
@@ -14,6 +14,7 @@
 | `control_plane/blog.py` | 结构化图文博客、32 MiB 配额、自定义 HTML 校验和管理员审核发布 |
 | `control_plane/security.py` | 密码、随机令牌、图像、JSON 深度和通用输入约束 |
 | `control_plane/cli.py` | 空账号池的唯一初始管理员安全引导 |
+| `--ui-root <dir>` | 可选加载操作者测试 UI；默认不捆绑界面，后端只读取 `index.html`、`app.css`、`app.js` |
 | `tests/test_control_plane.py` | 认证、隔离、同步、通讯、容量、博客、代理、CSRF 和推理队列验收 |
 
 ## 数据目录
@@ -27,7 +28,7 @@ data/
 │  ├─ <account-id>/                  # 每个账号目录彼此并列，0700
 │  │  ├─ identity.json               # 账号名、角色、状态、scrypt 盐和哈希
 │  │  ├─ profile.json                # 昵称、头像引用
-│  │  ├─ settings.json               # 该账号自己的界面/代理偏好
+│  │  ├─ settings.json               # 该账号自己的主题和语言偏好；不保存全局代理项
 │  │  ├─ social.json                 # 该账号对其他人的私人备注
 │  │  ├─ sessions.json               # 有时限且只存摘要的登录会话
 │  │  ├─ devices.json                # 可撤销且只存摘要的桌面同步令牌
@@ -60,10 +61,17 @@ python3 -m control_plane.cli --data-root /safe/private/data init-admin --usernam
 ```sh
 python3 tools/workspace_runtime.py run \
   --session <active-session> control-plane -- \
-  python3 -m control_plane.server --host {host} --port {port} --data-root "$APP_DATA_DIR"
+  python3 -m control_plane.server --host {host} --port {port} \
+    --data-root "$APP_DATA_DIR" --ui-root .runtime/operator-ui
 ```
 
+测试 UI 的服务器位置固定为工作区内 `.runtime/operator-ui/`，本机设计源和截图留在操作者的忽略目录；两者都不得加入 Git。未传 `--ui-root` 时仍是纯 API 服务。agent-1 当前通过 `127.0.0.1:18761` 预览，本机访问命令为 `ssh -N -L 18761:127.0.0.1:18761 aliyun-server`。
+
 生产 HTTPS 部署应增加 `--secure-cookie`。不允许让 systemd 从 agent-1 或 agent-2 工作区运行，也不允许继续使用旧的公网明文 TCP 8765 登录。
+
+## 全局代理
+
+代理模式、GitHub 节点、订阅刷新和状态读取都只允许管理员访问。代理不是账号设置，`settings.json` 不保存代理偏好。管理员开启后，所有服务器用户都可以共享 `127.0.0.1:7890`，但具体程序仍必须显式设置 HTTP/SOCKS 代理；系统不会自动接管所有进程。
 
 ## IrohaWalendar 只读同步
 
