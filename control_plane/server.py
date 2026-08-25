@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serve the authenticated management API and an optional operator-supplied UI."""
+"""Serve the authenticated management API and an optional reviewed UI directory."""
 
 from __future__ import annotations
 
@@ -691,7 +691,7 @@ def main() -> None:
     parser.add_argument("--data-root", default=os.environ.get("APP_DATA_DIR", ".runtime/data"))
     parser.add_argument("--mihomo-socket", default=os.environ.get("MIHOMO_SOCKET", "/run/mihomo/controller.sock"))
     parser.add_argument("--secure-cookie", action="store_true")
-    parser.add_argument("--ui-root", default=os.environ.get("CONTROL_PLANE_UI_ROOT"), help="可选测试 UI 目录；不配置时根路径只返回 API 元数据")
+    parser.add_argument("--ui-root", default=os.environ.get("CONTROL_PLANE_UI_ROOT"), help="可选界面目录；可使用 control_plane/ui 基础模板，不配置时根路径只返回 API 元数据")
     args = parser.parse_args()
     server = create_server(
         args.host,

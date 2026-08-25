@@ -80,11 +80,7 @@ class ControlPlaneTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
-        self.ui_root = self.root / "operator-ui"
-        self.ui_root.mkdir()
-        (self.ui_root / "index.html").write_text("<!doctype html><title>测试</title><main>进入你的服务器工作空间</main><script src='/static/app.js'></script>", "utf-8")
-        (self.ui_root / "app.css").write_text("html{font:14px sans-serif}", "utf-8")
-        (self.ui_root / "app.js").write_text("function renderPlanner(){}", "utf-8")
+        self.ui_root = Path(__file__).resolve().parents[1] / "control_plane" / "ui"
         self.accounts = AccountStore(self.root / "data")
         self.admin = self.accounts.bootstrap_admin("admin", ADMIN_PASSWORD)
         self.alice = self.accounts.create_account("alice", USER_PASSWORD)
@@ -191,7 +187,7 @@ class ControlPlaneTests(unittest.TestCase):
         self.assertTrue(body["ui_bundled"])
         status, css, _ = self.request("/static/app.css")
         self.assertEqual(status, 200)
-        self.assertIn(b"font:14px", css)
+        self.assertIn(b"html{background:var(--bg);color:var(--text);font:14px", css)
         status, javascript, _ = self.request("/static/app.js")
         self.assertEqual(status, 200)
         self.assertIn(b"renderPlanner", javascript)

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>登录 · Control Plane</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <section class="login-view" id="login-view">
+    <div class="login-context" aria-hidden="true">
+      <a class="brand brand-inverse" href="/"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span><strong>Control Plane</strong><small>PRIVATE SERVER WORKSPACE</small></span></a>
+      <div class="login-copy">
+        <p class="eyebrow">SSH MANAGED ACCESS</p>
+        <h1>进入你的服务器工作空间</h1>
+        <p>账号、规划、通讯、博客与推理任务保持隔离；全局资源只由管理员操作。</p>
+      </div>
+      <dl class="trust-strip">
+        <div><dt>连接</dt><dd>SSH 隧道 · 私有</dd></div>
+        <div><dt>会话</dt><dd>12 小时 · 可撤销</dd></div>
+        <div><dt>数据</dt><dd>账号目录独立</dd></div>
+      </dl>
+    </div>
+    <main class="login-stage">
+      <form class="login-panel" id="login-form">
+        <div>
+          <p class="eyebrow">ACCOUNT SIGN IN</p>
+          <h2>账号登录</h2>
+          <p class="muted">使用管理员创建的账号密码。密码不会保存在浏览器中。</p>
+        </div>
+        <div class="setup-notice" id="setup-notice" hidden>
+          <strong>尚未初始化管理员</strong>
+          <span>请先在 SSH 终端执行根目录指引中的无回显初始化命令。</span>
+        </div>
+        <label class="field"><span>账号名称</span><input id="login-username" name="username" autocomplete="username" required minlength="3" maxlength="32"></label>
+        <label class="field"><span>密码</span><span class="password-field"><input id="login-password" name="password" type="password" autocomplete="current-password" required><button type="button" class="text-button" id="toggle-password">显示</button></span></label>
+        <p class="form-error" id="login-error" role="alert" hidden></p>
+        <button class="button primary wide" id="login-submit" type="submit">进入管理页面</button>
+        <p class="login-hint">仅通过 SSH 隧道或正式 HTTPS 输入凭据。</p>
+      </form>
+    </main>
+  </section>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <a class="brand brand-inverse" href="#overview"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span><strong>Control Plane</strong><small>ALIYUN SERVER</small></span></a>
+        <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="关闭导航">×</button>
+      </div>
+      <nav class="nav" aria-label="主导航">
+        <p class="nav-label">工作空间</p>
+        <a href="#overview" data-route="overview"><span>概览</span></a>
+        <a href="#planner" data-route="planner"><span>规划</span><small>只读</small></a>
+        <a href="#communications" data-route="communications"><span>通讯</span></a>
+        <a href="#blog" data-route="blog"><span>博客</span></a>
+        <a href="#inference" data-route="inference"><span>推理任务</span></a>
+        <a href="#settings" data-route="settings"><span>个人设置</span></a>
+        <div data-admin hidden>
+          <p class="nav-label admin-label">管理员</p>
+          <a href="#proxy" data-route="proxy"><span>全局代理</span></a>
+          <a href="#accounts" data-route="accounts"><span>账号池</span></a>
+          <a href="#reviews" data-route="reviews"><span>博客审核</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-user">
+        <span class="avatar" id="sidebar-avatar">—</span>
+        <span><strong id="sidebar-name">—</strong><small id="sidebar-username">—</small></span>
+        <button class="icon-button" id="logout-button" type="button" aria-label="退出登录">↗</button>
+      </div>
+    </aside>
+    <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="关闭导航"></button>
+    <section class="app-main">
+      <header class="topbar">
+        <button class="icon-button menu-toggle" id="menu-toggle" type="button" aria-label="打开导航">☰</button>
+        <div><p class="eyebrow" id="page-eyebrow">WORKSPACE</p><h1 id="page-title">概览</h1></div>
+        <div class="topbar-actions"><span class="service-state" id="service-state"><i></i>服务正常</span><button class="button ghost compact" id="refresh-button" type="button">刷新</button></div>
+      </header>
+      <main class="page" id="page" tabindex="-1"></main>
+    </section>
+  </div>
+
+  <dialog class="dialog" id="action-dialog">
+    <form method="dialog" id="dialog-form">
+      <header><p class="eyebrow" id="dialog-eyebrow">CONFIRM</p><h2 id="dialog-title">确认操作</h2></header>
+      <div id="dialog-body"></div>
+      <p class="form-error" id="dialog-error" role="alert" hidden></p>
+      <footer><button class="button secondary" value="cancel" formnovalidate>取消</button><button class="button primary" id="dialog-confirm" value="default">确认</button></footer>
+    </form>
+  </dialog>
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
