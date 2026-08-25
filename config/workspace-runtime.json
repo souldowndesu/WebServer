@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
   "shared_ports": {
+    "account-control": {
+      "bind": "127.0.0.1",
+      "owner": "server-environment",
+      "port": 8790
+    },
     "mihomo-proxy": {
       "bind": "127.0.0.1",
       "owner": "server-environment",
