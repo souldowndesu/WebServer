@@ -124,6 +124,8 @@ class ControlPlaneTests(unittest.TestCase):
         token: str | None = None,
         scheme: str = "Bearer",
         origin: str | None = None,
+        host: str | None = None,
+        real_ip: str | None = None,
         cookie: str | None = None,
         csrf: str | None = None,
     ):
@@ -136,6 +138,10 @@ class ControlPlaneTests(unittest.TestCase):
             headers["Authorization"] = f"{scheme} {token}"
         if origin:
             headers["Origin"] = origin
+        if host:
+            headers["Host"] = host
+        if real_ip:
+            headers["X-Real-IP"] = real_ip
         if cookie:
             headers["Cookie"] = cookie
         if csrf:
@@ -157,6 +163,49 @@ class ControlPlaneTests(unittest.TestCase):
         )
         self.assertEqual(status, 200, body)
         return body
+
+    def test_https_proxy_security_and_per_client_login_limit(self):
+        self.server.secure_cookie = True
+        self.server.trust_loopback_proxy = True
+        public_host = "198.51.100.20"
+        origin = f"https://{public_host}"
+
+        for _attempt in range(5):
+            status, _body, _headers = self.request(
+                "/api/v1/auth/login",
+                method="POST",
+                payload={"username": "alice", "password": "wrong password"},
+                host=public_host,
+                origin=origin,
+                real_ip="203.0.113.10",
+            )
+            self.assertEqual(status, 401)
+
+        status, body, _headers = self.request(
+            "/api/v1/auth/login",
+            method="POST",
+            payload={"username": "alice", "password": USER_PASSWORD},
+            host=public_host,
+            origin=origin,
+            real_ip="203.0.113.10",
+        )
+        self.assertEqual(status, 429, body)
+
+        status, login, login_headers = self.request(
+            "/api/v1/auth/login",
+            method="POST",
+            payload={"username": "alice", "password": USER_PASSWORD},
+            host=public_host,
+            origin=origin,
+            real_ip="203.0.113.11",
+        )
+        self.assertEqual(status, 200, login)
+        self.assertEqual(login_headers.get("Strict-Transport-Security"), "max-age=31536000")
+        self.assertTrue(all("Secure" in item for item in login_headers.get_all("Set-Cookie")))
+
+        status, _body, ui_headers = self.request("/", host=public_host)
+        self.assertEqual(status, 200)
+        self.assertEqual(ui_headers.get("Strict-Transport-Security"), "max-age=31536000")
 
     def connect_alice_and_bob(self):
         status, body, _ = self.request(

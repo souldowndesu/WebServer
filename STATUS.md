@@ -7,10 +7,10 @@ Update this file before handoff, pull-request merge, or the end of a work sessio
 - State: ready
 - Current task: none
 - Branch: `agent-1`
-- Last verification: user testing accepted the current interface as a temporary base template despite known polish defects; 25 automated tests, the earlier real 9-route/6-capture browser QA, Windows PowerShell 5.1 adapter QA, and live tester-account IrohaWalendar flow pass. The main-derived account-control.service is enabled/active with ExecMainStatus 0, initialized health and login page HTTP 200, admin proxy unauthenticated HTTP 401, exact UI hashes, private migrated data, only `127.0.0.1:8790` listening, no 18761 listener, unchanged SSH-only UFW, active Mihomo, and failed public 8790 connectivity
-- Pull requests: product #26, deployment-port registry #27, environment plan #28, and applied verification #29 are merged
-- Last handoff: the accepted base template runs from root-owned `/opt/account-control`; the preserved two-account data runs from private `/var/lib/account-control`; operators access it only through `ssh -N -L 8790:127.0.0.1:8790 aliyun-server`. The workspace preview is stopped and its lease/18761 port is returned in the final release step
-- Next action: future work may refine or replace `control_plane/ui` using `docs/frontend-handoff.md`; public multi-user access remains gated on a separate HTTPS reverse-proxy deployment with Secure Cookie
+- Last verification: 13 automated tests pass; proxy-control.service is enabled/active as a low-privilege user on 127.0.0.1:8790; allowlisted API returned 40 nodes in `rule + AUTO`; invalid Host/cross-origin changes were rejected; public TCP 8790 was unreachable; desktop/tablet/mobile SSH-tunnel browser checks had zero errors, failed requests, or horizontal overflow; Mihomo, chat, and GitHub proxy checks remained healthy
+- Pull requests: #5 — clock/chat/API; #6 and #7 — public chat service; #8 — local-only Mihomo GitHub proxy; #10 — proxy control page; #11 — loopback-only control service; all merged
+- Last handoff: proxy control product merged at `a790710`; loopback-only service record merged at `26408ed`; current control state restored to `rule + AUTO`
+- Next action: establish an SSH tunnel with `ssh -N -L 8790:127.0.0.1:8790 aliyun-server`, then browse to `http://127.0.0.1:8790`
 
 ## Agent 2
 

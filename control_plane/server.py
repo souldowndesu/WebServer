@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import os
 import re
@@ -49,6 +50,7 @@ class ManagementServer(ThreadingHTTPServer):
         proxy_controller: Any,
         *,
         secure_cookie: bool = False,
+        trust_loopback_proxy: bool = False,
         ui_root: str | Path | None = None,
     ) -> None:
         super().__init__(address, ManagementRequestHandler)
@@ -57,6 +59,7 @@ class ManagementServer(ThreadingHTTPServer):
         self.blogs = BlogManager(accounts, shared)
         self.proxy_controller = proxy_controller
         self.secure_cookie = secure_cookie
+        self.trust_loopback_proxy = trust_loopback_proxy
         self.ui_root = Path(ui_root).resolve() if ui_root else None
         self.login_failures: dict[str, list[float]] = {}
         self.login_lock = threading.Lock()
@@ -447,7 +450,7 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
             raise PermissionError("origin_not_allowed")
         payload = self._read_json()
         username = str(payload.get("username") or "").strip()
-        key = f"{self.client_address[0]}:{username.casefold()}"
+        key = f"{self._client_ip()}:{username.casefold()}"
         now = time.monotonic()
         with self.server.login_lock:
             failures = [item for item in self.server.login_failures.get(key, []) if now - item < LOGIN_WINDOW_SECONDS]
@@ -572,8 +575,25 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         )
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
+        self._transport_security_headers()
         self.end_headers()
         self.wfile.write(content)
+
+    def _client_ip(self) -> str:
+        peer = self.client_address[0]
+        if not self.server.trust_loopback_proxy:
+            return peer
+        try:
+            if not ipaddress.ip_address(peer).is_loopback:
+                return peer
+            forwarded = self.headers.get("X-Real-IP", "").strip()
+            return str(ipaddress.ip_address(forwarded)) if forwarded else peer
+        except ValueError:
+            return peer
+
+    def _transport_security_headers(self) -> None:
+        if self.server.secure_cookie:
+            self.send_header("Strict-Transport-Security", "max-age=31536000")
 
     def _serve_file(self, path: Path, content_type: str, cache_control: str) -> None:
         content = path.read_bytes()
@@ -602,6 +622,7 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+        self._transport_security_headers()
         self.send_header(
             "Content-Security-Policy",
             "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
@@ -628,6 +649,7 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
         self.send_header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+        self._transport_security_headers()
 
     def _send_json(
         self,
@@ -672,6 +694,7 @@ def create_server(
     shared: SharedStore | None = None,
     proxy_controller: Any | None = None,
     secure_cookie: bool = False,
+    trust_loopback_proxy: bool = False,
     ui_root: str | Path | None = None,
 ) -> ManagementServer:
     if accounts is None:
@@ -681,7 +704,15 @@ def create_server(
         shared = SharedStore(accounts.shared_root / "platform.sqlite3")
     if proxy_controller is None:
         proxy_controller = MihomoClient(os.environ.get("MIHOMO_SOCKET", "/run/mihomo/controller.sock"))
-    return ManagementServer((host, port), accounts, shared, proxy_controller, secure_cookie=secure_cookie, ui_root=ui_root)
+    return ManagementServer(
+        (host, port),
+        accounts,
+        shared,
+        proxy_controller,
+        secure_cookie=secure_cookie,
+        trust_loopback_proxy=trust_loopback_proxy,
+        ui_root=ui_root,
+    )
 
 
 def main() -> None:
@@ -691,6 +722,11 @@ def main() -> None:
     parser.add_argument("--data-root", default=os.environ.get("APP_DATA_DIR", ".runtime/data"))
     parser.add_argument("--mihomo-socket", default=os.environ.get("MIHOMO_SOCKET", "/run/mihomo/controller.sock"))
     parser.add_argument("--secure-cookie", action="store_true")
+    parser.add_argument(
+        "--trust-loopback-proxy",
+        action="store_true",
+        help="仅当 HTTP 连接来自 loopback 时，信任本机反向代理写入的 X-Real-IP",
+    )
     parser.add_argument("--ui-root", default=os.environ.get("CONTROL_PLANE_UI_ROOT"), help="可选界面目录；可使用 control_plane/ui 基础模板，不配置时根路径只返回 API 元数据")
     args = parser.parse_args()
     server = create_server(
@@ -699,6 +735,7 @@ def main() -> None:
         data_root=args.data_root,
         proxy_controller=MihomoClient(args.mihomo_socket),
         secure_cookie=args.secure_cookie,
+        trust_loopback_proxy=args.trust_loopback_proxy,
         ui_root=args.ui_root,
     )
     stopping = threading.Event()
