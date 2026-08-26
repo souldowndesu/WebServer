@@ -93,15 +93,13 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/") or "/"
         try:
             if method == "GET" and path == "/":
-                self._send_json(
-                    HTTPStatus.OK,
-                    {
-                        "service": "authenticated-management-api",
-                        "api_version": "v1",
-                        "ui_bundled": False,
-                        "documentation": "BACKEND_GUIDE.md",
-                    },
-                )
+                self._serve_static_file("index.html")
+                return
+            if method == "GET" and path in {"/index.html", "/planner.html", "/chat.html"}:
+                self._serve_static_file(path.lstrip("/"))
+                return
+            if method == "GET" and path in {"/style.css", "/main.js"}:
+                self._serve_static_file(path.lstrip("/"))
                 return
             if method == "GET" and path == "/favicon.ico":
                 self._send_empty(HTTPStatus.NO_CONTENT)
@@ -555,6 +553,18 @@ class ManagementRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         self.wfile.write(content)
+
+    def _serve_static_file(self, filename: str) -> None:
+        path = Path(__file__).parent / "static" / filename
+        if not path.exists():
+            self._send_empty(HTTPStatus.NOT_FOUND)
+            return
+        mime = "text/html; charset=utf-8"
+        if filename.endswith(".css"):
+            mime = "text/css; charset=utf-8"
+        elif filename.endswith(".js"):
+            mime = "application/javascript; charset=utf-8"
+        self._serve_file(path, mime, "no-cache")
 
     def _serve_file(self, path: Path, content_type: str, cache_control: str) -> None:
         content = path.read_bytes()

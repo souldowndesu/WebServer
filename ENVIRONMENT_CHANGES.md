@@ -161,3 +161,17 @@ No server environment changes were made during the workflow-document initializat
 - Verification and result:
 - Rollback:
 - Coordination impact:
+
+### 2026-08-26 — Nginx reverse proxy for public HTTPS access to UI
+
+- State: applied
+- Owner: Agent 2
+- Dedicated PR: (bundled with UI PR)
+- Reason: The user explicitly requested to view the UI via HTTPS on the public internet.
+- Scope (exact paths/packages/services/settings): Installed `nginx` via `apt-get`, created self-signed certificate, created `/etc/nginx/sites-available/control-plane`, linked to `sites-enabled`, opened port 443 in `ufw`, restarted nginx.
+- Source URL/version/SHA-256, if applicable: N/A
+- Planned actions: Install nginx, generate cert, write config, open port, restart service.
+- Actual actions: Executed bash script performing all planned actions successfully.
+- Verification and result: Nginx deployed successfully and listening on 443 with self-signed certificate, proxying to 127.0.0.1:18861.
+- Rollback: Stop nginx, remove ufw rule, delete site config and certs.
+- Coordination impact: Exposes the UI via port 443 on the server to the public internet for verification purposes.

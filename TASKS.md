@@ -11,6 +11,7 @@ Update this file through pull requests. Each task needs an owner, branch, accept
 
 | Task | Owner | Branch | Acceptance criteria | Status |
 | --- | --- | --- | --- | --- |
+| UI Design and Integration | Agent 2 | agent-2 | Complete UI mockup, adapt to backend, deploy via HTTPS on public network | In Progress |
 
 ## Completed
 

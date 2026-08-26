@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>规划 - 管理后台</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="layout">
+    <nav class="sidebar">
+      <div class="sidebar-header">控制平面</div>
+      <div class="nav-menu">
+        <a href="#" class="nav-item">概览</a>
+        <a href="planner.html" class="nav-item active">规划</a>
+        <a href="chat.html" class="nav-item">通讯</a>
+        <a href="#" class="nav-item">博客</a>
+        <a href="#" class="nav-item">任务</a>
+        <a href="#" class="nav-item">设置</a>
+      </div>
+    </nav>
+    <main class="main-content">
+      <header class="topbar justify-between">
+        <h2 style="font-size: 16px;">工作规划 (只读)</h2>
+        <div class="text-weak text-small">
+          来自设备: DESKTOP-MAIN | 最后同步: 2026-08-26 10:30
+        </div>
+      </header>
+      <div class="p-8">
+        <div class="card">
+          <h3 class="card-title">本周计划</h3>
+          <div class="planner-grid">
+            <div class="planner-header">周一</div>
+            <div class="planner-header">周二</div>
+            <div class="planner-header">周三</div>
+            <div class="planner-header">周四</div>
+            <div class="planner-header">周五</div>
+            <div class="planner-header">周六</div>
+            <div class="planner-header">周日</div>
+            
+            <div class="planner-cell">
+              <div class="plan-item">例会准备</div>
+              <div class="plan-item">审查代理日志</div>
+            </div>
+            <div class="planner-cell">
+              <div class="plan-item">更新后端路由</div>
+            </div>
+            <div class="planner-cell">
+              <div class="plan-item">同步设备测试</div>
+            </div>
+            <div class="planner-cell"></div>
+            <div class="planner-cell">
+              <div class="plan-item">发布博客草稿</div>
+            </div>
+            <div class="planner-cell"></div>
+            <div class="planner-cell"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
